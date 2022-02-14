@@ -71,6 +71,11 @@ This version uses the JS implementation originally found on the [Baba is Y'all](
 2. In a browser, go to the URL `localhost:8080`
    _Note_: this port number can be changed on _line 15_ in the [index-server.js](index-server.js) file
 
+#### Attaching VSCode Debugger
+
+1. To enable Auto Attach feature, from the Command Palette (Ctrl+Shift+P) type `Toggle Auto Attach`. Select the option `Only With Flag`, the flag being `--inspect`.
+2. Now to run the server with the debugger, simply do the same but with the flag: `node --inspect index-server.js`
+
 ### Quick Start
 
 1. To create a new agent, copy the `empty_AGENT.js` file and rename it with the following convention:
