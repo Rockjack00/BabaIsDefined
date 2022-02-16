@@ -14,11 +14,21 @@ var pathing = require("helpers/pathing"); // access floodfill pathing
                     thread.success(point);
                 }
                 // For a predicate to NOT be successful, no new state is inserted in the choice point stack.
+            },
+            "isYou/2": function(thread, point, atom) {
+                if () {
+                    thread.success(point);
+                }
+            },
+            "isWin/2": function(thread, point, atom) {
+                if () {
+                    thread.success(point);
+                }
             }
         };
     };
     // List of predicates exported by the module
-    var exports = ["reachable/4"];
+    var exports = ["reachable/4", "isYou/2", "isWin/2"];
     // DON'T EDIT
     if( typeof module !== 'undefined' ) {
         module.exports = function(tau_prolog) {
