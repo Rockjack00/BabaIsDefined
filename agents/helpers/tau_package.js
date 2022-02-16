@@ -9,16 +9,16 @@ var pathing = require("helpers/pathing"); // access floodfill pathing
     var predicates = function() {
         return {
             // reachable/7
-            "reachable/7": function(thread, point, _, start_pos, movable_spcs, goal_spcs, possActions) { // do we need atom?
-                if (pathing.floodfill_reachable(start_pos, movable_spcs, goal_spcs, possActions) {
+            "reachable/4": function(thread, point, atom) { // do we need atom?
+                if (pathing.floodfill_reachable(...atom.args)) {
                     thread.success(point);
                 }
                 // For a predicate to NOT be successful, no new state is inserted in the choice point stack.
-             }
+            }
         };
     };
     // List of predicates exported by the module
-    var exports = ["reachable/7"];
+    var exports = ["reachable/4"];
     // DON'T EDIT
     if( typeof module !== 'undefined' ) {
         module.exports = function(tau_prolog) {
