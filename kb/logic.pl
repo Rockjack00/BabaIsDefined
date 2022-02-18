@@ -1,13 +1,13 @@
 use_module("../js/prolog_wrapper.js").
 
 /*TODO create isYou() and isWin() predicates in js wrapper*/
-win(Map,Path):- isYou(Map,X), isWin(Map,X).
-win(Map,Path):- isYou(Map,X), isWin(Map,Y), reachable(X,Y,Map,Path).
-win(Map,Path):- isYou(Map,X), makeWin(Map,Y), reachable(X,Y,Map,Path).
+win(State,Path):- isYou(State,X), isWin(State,X).
+win(State,Path):- isYou(State,X), isWin(State,Y), reachable(X,Y,State,Path).
+win(State,Path):- isYou(State,X), makeWin(State,Y), reachable(X,Y,State,Path).
 
-reachable(X,Y,Map,Path):- floodfill(X,Y,Map,Path).
+reachable(X,Y,State,Path):- floodfill(X,Y,State,Path).
 
 /*We can make something win either by changing its rules or transforming it.
 Both predicates will be js queries*/
-makeWin(Map,Y):- assertWin(Map,Y).
-makeWin(Map,Y):- createWin(Map,Y).
+makeWin(State,Y):- assertWin(State,Y).
+makeWin(State,Y):- createWin(State,Y).
