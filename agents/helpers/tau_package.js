@@ -29,7 +29,6 @@ function newewState(kekeState, map) {
     simjs.interpretRules(kekeState);
 }
 
-
 (function (pl) {
     // Name of the module
     var name = "tau_pathing";
@@ -49,33 +48,46 @@ function newewState(kekeState, map) {
                 if (pl.type.is_variable(game_state)) {
                     thread.throw_error(pl.error.instantiation(atom.indicator));
                 }
-                // If you is variable, set it
-                // if you is constant, check against the players
                 
                 var players = accessGameState("players", game_state);
-                print(players)
-                if (pl.type.is_variable(you)) {
+                if (pl.type.is_variable(you)) { // If you is variable, set it
                     createChoicePoints(point, you, players);
-                } else {
-                    print("here")
-                    /*
+                    thread.success(point);
+                    return
+                } else { // if you is constant, check against the players
                     for (const player of players) {
-                        if ()
+                        if (you.name == player.name && you.x == player.x && you.y == player.y) {
+                            thread.success(point);
+                            return
+                        }
                     }
-                    */
                 }
-                
-
             },
             "isWin/2": function (thread, point, atom) {
-                var you = atom.args[0],
+                var win = atom.args[0],
                     game_state = atom.args[1];
-                var winnables = accessGameState("winnables", game_state);
+                //check that gamestate is constant
+                if (pl.type.is_variable(game_state)) {
+                    thread.throw_error(pl.error.instantiation(atom.indicator));
+                }
 
-                createChoicePoints(point, you, winnables);
-            },
+                var winnables = accessGameState("winnables", game_state);
+                if (pl.type.is_variable(win)) { // If win is variable, set it
+                    createChoicePoints(point, win, winnables);
+                    thread.success(point);
+                    return
+                } else { // if win is constant, check against the winnables
+                    for (const winnable of winnables) {
+                        if (win.name == winnable.name && win.x == winnable.x && win.y == winnable.y) {
+                            thread.success(point);
+                            return
+                        }
+                    }
+                }
+            }
         };
     };
+
     // List of predicates exported by the module
     var exports = ["reachable/4", "isYou/2", "isWin/2"];
     // DON'T EDIT
