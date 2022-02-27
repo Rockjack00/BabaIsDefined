@@ -21,7 +21,7 @@ var initState = null;
 /* Solve the level, given an initial state. */
 function solve() {
     /* Already found a solution */
-    if (bestPath != []) {
+    if (bestPath != [] && bestPath != null) {
         return bestPath;
     }
 

@@ -21,7 +21,7 @@ function accessGameState(element, ascii_map) {
     return game_elements;    
 }
 
-function newewState(kekeState, map) {
+function newState(kekeState, map) {
     simjs.clearLevel(kekeState);
     kekeState.orig_map = map;
     [kekeState.back_map, kekeState.obj_map] = simjs.splitMap(kekeState.orig_map);
