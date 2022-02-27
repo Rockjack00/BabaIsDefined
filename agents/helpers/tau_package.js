@@ -36,6 +36,20 @@ function newewState(kekeState, map) {
     var predicates = function () {
         return {
             "reachable/4": function (thread, point, atom) {
+                var x_obj = atom.args[0],
+                    y_obj = atom.args[1],
+                    game_state = atom.args[2],
+                    path = atom.args[3]
+
+                // Check that x_obj, y_obj, and gamestate are constant
+                if (pl.type.is_variable(x_obj) || pl.type.is_variable(y_obj) || pl.type.is_variable(game_state)) {
+                    thread.throw_error(pl.error.instantiation(atom.indicator));
+                }
+                // Check that path is variable
+                if (!pl.type.is_variable(path)) {
+                    thread.throw_error(pl.error.instantiation(atom.indicator));
+                }
+                
                 if (pathing.floodfill_reachable(...atom.args)) {
                     thread.success(point);
                 }
@@ -44,17 +58,19 @@ function newewState(kekeState, map) {
             "isYou/2": function (thread, point, atom) {
                 var you = atom.args[0],
                     game_state = atom.args[1];
-                //check that gamestate is constant
+
+                // Check that gamestate is constant
                 if (pl.type.is_variable(game_state)) {
                     thread.throw_error(pl.error.instantiation(atom.indicator));
                 }
                 
                 var players = accessGameState("players", game_state);
-                if (pl.type.is_variable(you)) { // If you is variable, set it
+                // If you is variable, otherwise check against the winnables
+                if (pl.type.is_variable(you)) { 
                     createChoicePoints(point, you, players);
                     thread.success(point);
                     return
-                } else { // if you is constant, check against the players
+                } else { 
                     for (const player of players) {
                         if (you.name == player.name && you.x == player.x && you.y == player.y) {
                             thread.success(point);
@@ -66,17 +82,19 @@ function newewState(kekeState, map) {
             "isWin/2": function (thread, point, atom) {
                 var win = atom.args[0],
                     game_state = atom.args[1];
-                //check that gamestate is constant
+
+                // Check that gamestate is constant
                 if (pl.type.is_variable(game_state)) {
                     thread.throw_error(pl.error.instantiation(atom.indicator));
                 }
 
                 var winnables = accessGameState("winnables", game_state);
-                if (pl.type.is_variable(win)) { // If win is variable, set it
+                // If win is variable, otherwise check against the winnables
+                if (pl.type.is_variable(win)) {
                     createChoicePoints(point, win, winnables);
                     thread.success(point);
                     return
-                } else { // if win is constant, check against the winnables
+                } else {
                     for (const winnable of winnables) {
                         if (win.name == winnable.name && win.x == winnable.x && win.y == winnable.y) {
                             thread.success(point);
