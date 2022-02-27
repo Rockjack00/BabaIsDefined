@@ -14,15 +14,29 @@ function createChoicePoints(thread, point, term, choice_list) {
     thread.prepend(states);
 }
 
+function accessGameState(element, ascii_map) {
+    const currState = {};
+    newState(currState, ascii_map);
+    game_elements = currState[element];
+    return game_elements;    
+}
+
+function newewState(kekeState, map) {
+    simjs.clearLevel(kekeState);
+    kekeState.orig_map = map;
+    [kekeState.back_map, kekeState.obj_map] = simjs.splitMap(kekeState.orig_map);
+    simjs.assignMapObjs(kekeState);
+    simjs.interpretRules(kekeState);
+}
+
+
 (function (pl) {
     // Name of the module
     var name = "tau_pathing";
     // Object with the set of predicates, indexed by indicators (name/arity)
     var predicates = function () {
         return {
-            // reachable/7
             "reachable/4": function (thread, point, atom) {
-                // do we need atom?
                 if (pathing.floodfill_reachable(...atom.args)) {
                     thread.success(point);
                 }
@@ -31,9 +45,27 @@ function createChoicePoints(thread, point, term, choice_list) {
             "isYou/2": function (thread, point, atom) {
                 var you = atom.args[0],
                     game_state = atom.args[1];
+                //check that gamestate is constant
+                if (pl.type.is_variable(game_state)) {
+                    thread.throw_error(pl.error.instantiation(atom.indicator));
+                }
+                // If you is variable, set it
+                // if you is constant, check against the players
+                
                 var players = accessGameState("players", game_state);
+                print(players)
+                if (pl.type.is_variable(you)) {
+                    createChoicePoints(point, you, players);
+                } else {
+                    print("here")
+                    /*
+                    for (const player of players) {
+                        if ()
+                    }
+                    */
+                }
+                
 
-                createChoicePoints(point, you, players);
             },
             "isWin/2": function (thread, point, atom) {
                 var you = atom.args[0],
