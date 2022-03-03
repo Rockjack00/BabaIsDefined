@@ -1,0 +1,14 @@
+[
+  {
+    "levelSet": "demo_levels_LEVELS",
+    "levels": [
+      {
+        "id": 1,
+        "iterations": 10000,
+        "time": 0.013,
+        "solution": "",
+        "won_level": false
+      }
+    ]
+  }
+]

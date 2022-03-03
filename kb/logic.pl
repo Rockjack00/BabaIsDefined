@@ -1,4 +1,4 @@
-use_module("../js/prolog_wrapper.js").
+/* :- use_module(library("./agents/helpers/tau_package.js")). */
 
 /*TODO create isYou() and isWin() predicates in js wrapper*/
 win(State,Path):- isYou(State,X), isWin(State,X).
