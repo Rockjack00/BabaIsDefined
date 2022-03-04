@@ -141,49 +141,49 @@
       {
         "id": 1,
         "iterations": 22,
-        "time": 0.09,
+        "time": 0.028,
         "solution": "rrrrr",
         "won_level": true
       },
       {
         "id": 2,
         "iterations": 10000,
-        "time": 3.956,
+        "time": 1.344,
         "solution": "",
         "won_level": false
       },
       {
         "id": 3,
         "iterations": 5424,
-        "time": 6.083,
+        "time": 1.916,
         "solution": "lldlulurrllurr",
         "won_level": true
       },
       {
         "id": 4,
         "iterations": 40,
-        "time": 0.053,
+        "time": 0.024,
         "solution": "lldlulurulurll",
         "won_level": true
       },
       {
         "id": 5,
         "iterations": 4811,
-        "time": 4.536,
+        "time": 1.556,
         "solution": "ulllddrdlrrrrurddruuu",
         "won_level": true
       },
       {
         "id": 6,
         "iterations": 23,
-        "time": 0.075,
+        "time": 0.032,
         "solution": "ulllddldrrrrdruuuurds",
         "won_level": true
       },
       {
         "id": 7,
         "iterations": 24,
-        "time": 0.052,
+        "time": 0.02,
         "solution": "ullldddrrrrrrurduuuul",
         "won_level": true
       },
