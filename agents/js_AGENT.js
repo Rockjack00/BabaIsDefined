@@ -3,16 +3,17 @@
 // Code by Milk
 
 //get imports (NODEJS)
-var simjs = require("../js/simulation"); //access the game states and simulation
+const { solve_level } = require("./helpers/strategy");
 
 let possActions = ["space", "right", "up", "left", "down"];
 
 // NEXT ITERATION STEP FOR SOLVING
 function iterSolve(init_state) {
-  // PERFORM ITERATIVE CALCULATIONS HERE //
+  /* Find the winning solution */
+  let solutionPath = solve_level(init_state);
 
   //return a sequence of actions or empty list
-  return ["right", "right", "right", "right", "right"];
+  return solutionPath;
 }
 
 // VISIBLE FUNCTION FOR OTHER JS FILES (NODEJS)

@@ -4,5 +4,8 @@
     "[javascript]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode",
       "prettier.tabWidth": 4
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }
