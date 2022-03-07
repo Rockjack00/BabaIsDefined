@@ -1,5 +1,5 @@
-const { reachable } = require("./helpers");
-const { isYou, isWin } = require("./predicates");
+
+const { isYou, isWin, isReachable } = require("./predicates");
 
 // Optionally do eager evaluation (depth first)
 const EAGER = false;
@@ -34,37 +34,37 @@ function solve_level(state) {
 
   var wins = isWin(state, []);
 
-  /* Are any objects that are WIN reachable by any objects that are YOU? */
+  /* Are any objects that are WIN isReachable by any objects that are YOU? */
 
-  // find all the reachable paths from to yous and wins
-  //   solutions = [];
-  //   for (let y in yous) {
-  //     for (let w in wins) {
-  // TODO:      p = reachable(y, w, state, []);
+  // find all the isReachable paths from to yous and wins
+    solutions = [];
+    for (let y in yous) {
+      for (let w in wins) {
+  TODO:      p = isReachable(state, y, w, []);
 
-  //       if (p == []) {
-  //         console.log(`${y} can reach ${w} by taking the path ${p}.`);
-  //         if (EAGER) {
-  //           return p;
-  //         }
-  //         solutions.push({ you: y, win: w, path: p });
-  //       }
-  //     }
-  //   }
+        if (p == []) {
+          console.log(`${y} can reach ${w} by taking the path ${p}.`);
+          if (EAGER) {
+            return p;
+          }
+          solutions.push({ you: y, win: w, path: p });
+        }
+      }
+    }
 
-  //   // just return the first one
-  //   if (solutions.length > 0) {
-  //     return solutions[0].path;
-  //   }
+    // just return the first one
+    if (solutions.length > 0) {
+      return solutions[0].path;
+    }
 
-  /* Are any objects that can be made WIN reachable by any objects that are YOU? */
+  /* Are any objects that can be made WIN isReachable by any objects that are YOU? */
   // TODO
   //   {
   //     let ps = [...path],
   //       ys = [...yous],
   //       new_wins = [];
   //     makeWin(state, new_wins);
-  //     if (reachable(ys, new_wins, state, ps)) {
+  //     if (isReachable(ys, new_wins, state, ps)) {
   //       console.log(
   //         `${ys} can make ${ws} winnable, then reach it by taking the path${
   //           Array.isArray(ps[0]) ? "s" : ""

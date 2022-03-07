@@ -1,4 +1,5 @@
 const { accessGameState } = require("./helpers");
+const { floodfill_reachable } = require("./pathing");
 
 /**
  * Each predicate in this file is a filter that will return either a filtered array of given options,
@@ -43,4 +44,33 @@ function isWin(state, wins) {
   return wins;
 }
 
-module.exports = { isYou, isWin };
+/**
+ * @description Filter all of the objects that are WIN in the current game state.
+ *              If wins is empty, all of the objects that are WIN in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} wins possible winnable objects OR an empty array.
+ * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
+ */
+ function isReachable(state, start, target, path) {
+
+
+  if (path.length > 0) {
+    // step through the path. Check if gets to the target
+    var win = false;
+    var nextState = state;
+    for (let step of path) {
+      [nextState, win] = simjs.nextMove(step, nextState);
+      if (win) {
+        return path;
+      }
+    }
+    return [];
+  } else {
+    return floodfill_reachable(state, start, target);
+  }
+
+}
+
+
+
+module.exports = { isYou, isWin, isReachable };

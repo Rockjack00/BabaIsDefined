@@ -1,9 +1,11 @@
+const {accessGameState} = require("./helpers");
+
 // for Reference, this are the position actions
 const possActions = ["space", "right", "up", "left", "down"];
 
+
 // const { path } = require("express/lib/application");
 
-var helpers = require("./helpers");
 
 class Position {
   //assuming 0,0 starts in top left, and vertical is y, horizontal is x
@@ -51,16 +53,13 @@ class Position {
 // todo - Currently the predicate uses (X,Y, Map, Path)
 // todo - what is in Map?
 // todo - path is something that this function will set
-function floodfill_reachable(x_obj, y_obj, state, path) {
+function floodfill_reachable(x_obj, y_obj, state) {
   start_pos = new Position(x_obj.x, x_obj.y);
   end_pos = new Position(y_obj.x, y_obj.y);
 
   path = floodfill(start_pos, end_pos, state);
-  if (path == null) {
-    return false;
-  } else {
-    return true;
-  }
+  
+  return path;
 }
 
 function floodfill(start_pos, end_pos, state) {
@@ -82,12 +81,12 @@ function floodfill(start_pos, end_pos, state) {
   var obstacles = {};
 
   // death things
-  killers = helpers.accessGameState("killers", state);
-  sinkers = helpers.accessGameState("sinkers", state);
+  const killers = accessGameState(state, "killers");
+  const sinkers = accessGameState(state, "sinkers");
   // stoppables
-  stoppables = helpers.accessGameState("stoppables", state);
+  stoppables = accessGameState(state, "stoppables");
   // additional things to avoid
-  pushables = helpers.accessGameState("pushables", state);
+  pushables = accessGameState(state, "pushables");
 
   // key items into the dictionary by their location string. Order added is not important
   obstacles = add_to_dict(killers, obstacles);
@@ -97,6 +96,10 @@ function floodfill(start_pos, end_pos, state) {
 
   path = ff_recur(start_pos, end_pos, obstacles, searched, move_actions);
 
+
+  if (path == null){
+    return [];
+  }
   return path;
 }
 
@@ -182,3 +185,6 @@ function ff_recur(cur_location, end_pos, obstacles, searched, move_actions) {
   // if loop is exited, no paths were found this way and a dead end was reached.
   return null;
 }
+
+
+module.exports = { floodfill_reachable };
