@@ -1,4 +1,4 @@
-var pathing = require("./pathing");
+// MAKE SURE NOT TO HAVE CIRCULAR DEPENDENCIES
 
 // Returns a list of phys_obj based on the corresponding element
 function accessGameState(state, element) {
@@ -9,12 +9,12 @@ function accessGameState(state, element) {
 }
 
 // Return true if a coordinate is reachable given the current state
-function reachable(pathing_type, x_obj, y_obj, state, path) {
-  if (pathing_type == "floodfill") {
-    return pathing.floodfill_reachable(x_obj, y_obj, state, path);
-  } else {
-    console.log("ERROR: unknown pathing type" + pathing_type);
-  }
-}
+// function reachable(pathing_type, x_obj, y_obj, state, path) {
+//   if (pathing_type == "floodfill") {
+//     return pathing.floodfill_reachable(x_obj, y_obj, state, path);
+//   } else {
+//     console.log("ERROR: unknown pathing type" + pathing_type);
+//   }
+// }
 
-module.exports = { accessGameState, reachable };
+module.exports = { accessGameState };

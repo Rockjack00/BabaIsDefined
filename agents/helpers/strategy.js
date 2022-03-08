@@ -37,25 +37,25 @@ function solve_level(state) {
   /* Are any objects that are WIN isReachable by any objects that are YOU? */
 
   // find all the isReachable paths from to yous and wins
-    solutions = [];
-    for (let y in yous) {
-      for (let w in wins) {
-  TODO:      p = isReachable(state, y, w, []);
+  solutions = [];
+  for (let y of yous) {
+    for (let w of wins) {
+      p = isReachable(state, y, w, []);
 
-        if (p == []) {
-          console.log(`${y} can reach ${w} by taking the path ${p}.`);
-          if (EAGER) {
-            return p;
-          }
-          solutions.push({ you: y, win: w, path: p });
+      if (p != []) {
+        console.log(`${y} can reach ${w} by taking the path ${p}.`);
+        if (EAGER) {
+          return p;
         }
+        solutions.push({ you: y, win: w, path: p });
       }
     }
+  }
 
-    // just return the first one
-    if (solutions.length > 0) {
-      return solutions[0].path;
-    }
+  // just return the first one
+  if (solutions.length > 0) {
+    return solutions[0].path;
+  }
 
   /* Are any objects that can be made WIN isReachable by any objects that are YOU? */
   // TODO

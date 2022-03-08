@@ -1,11 +1,11 @@
-const {accessGameState} = require("./helpers");
+
+const { accessGameState } = require("./helpers");
 
 // for Reference, this are the position actions
 const possActions = ["space", "right", "up", "left", "down"];
 
-
-// const { path } = require("express/lib/application");
-
+// global variable for storing searched locations
+var searched = {};
 
 class Position {
   //assuming 0,0 starts in top left, and vertical is y, horizontal is x
@@ -18,26 +18,26 @@ class Position {
   }
 
   get_up() {
-    new_x = this.x;
-    new_y = this.y + 1;
+    var new_x = this.x;
+    var new_y = this.y + 1;
     return new Position(new_x, new_y);
   }
 
   get_dn() {
-    new_x = this.x;
-    new_y = this.y - 1;
+    var new_x = this.x;
+    var new_y = this.y - 1;
     return new Position(new_x, new_y);
   }
 
   get_left() {
-    new_x = this.x - 1;
-    new_y = this.y;
+    var new_x = this.x - 1;
+    var new_y = this.y;
     return new Position(new_x, new_y);
   }
 
   get_right() {
-    new_x = this.x + 1;
-    new_y = this.y;
+    var new_x = this.x + 1;
+    var new_y = this.y;
     return new Position(new_x, new_y);
   }
 
@@ -53,12 +53,12 @@ class Position {
 // todo - Currently the predicate uses (X,Y, Map, Path)
 // todo - what is in Map?
 // todo - path is something that this function will set
-function floodfill_reachable(x_obj, y_obj, state) {
+function floodfill_reachable(state, x_obj, y_obj) {
   start_pos = new Position(x_obj.x, x_obj.y);
   end_pos = new Position(y_obj.x, y_obj.y);
 
   path = floodfill(start_pos, end_pos, state);
-  
+
   return path;
 }
 
@@ -68,7 +68,7 @@ function floodfill(start_pos, end_pos, state) {
 
   move_actions = possActions.slice(1, range + 1);
 
-  searched = [];
+  searched = {};
 
   //for each killable:
   // dict[killable,x,killable.y] = killable.
@@ -84,9 +84,9 @@ function floodfill(start_pos, end_pos, state) {
   const killers = accessGameState(state, "killers");
   const sinkers = accessGameState(state, "sinkers");
   // stoppables
-  stoppables = accessGameState(state, "stoppables");
+  const stoppables = accessGameState(state, "stoppables");
   // additional things to avoid
-  pushables = accessGameState(state, "pushables");
+  const pushables = accessGameState(state, "pushables");
 
   // key items into the dictionary by their location string. Order added is not important
   obstacles = add_to_dict(killers, obstacles);
@@ -94,10 +94,13 @@ function floodfill(start_pos, end_pos, state) {
   obstacles = add_to_dict(stoppables, obstacles);
   obstacles = add_to_dict(pushables, obstacles);
 
-  path = ff_recur(start_pos, end_pos, obstacles, searched, move_actions);
+  x_bounds = state["obj_map"][0].length;
+  y_bounds = state["obj_map"].length;
+
+  path = ff_recur(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
 
 
-  if (path == null){
+  if (path == null) {
     return [];
   }
   return path;
@@ -105,9 +108,9 @@ function floodfill(start_pos, end_pos, state) {
 
 // adds all items in the list to the dictionary, keyed by their location.
 function add_to_dict(phys_objs, obstacles) {
-  for (const obj in phys_objs) {
+  for (const obj of phys_objs) {
     temp_pt = new Position(obj.x, obj.y);
-    obstacles[temp_pt.get_string] = obj;
+    obstacles[temp_pt.get_string()] = obj;
   }
 
   return obstacles;
@@ -120,48 +123,70 @@ function add_to_dict(phys_objs, obstacles) {
 // obstacles - dictionary of obstacles keyed by their location
 //
 // returns path to the goal
-function ff_recur(cur_location, end_pos, obstacles, searched, move_actions) {
+function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bounds, path) {
   for (let i = 0; i < move_actions.length; ++i) {
     switch (move_actions[i]) {
       case "right":
-        next_space = cur_location.get_right;
+        next_space = cur_location.get_right();
         next_move = "right";
         break;
       case "up":
-        next_space = cur_location.get_up;
+        next_space = cur_location.get_up();
         next_move = "up";
         break;
       case "left":
-        next_space = cur_location.get_left;
+        next_space = cur_location.get_left();
         next_move = "left";
         break;
       case "down":
-        next_space = cur_location.get_dn;
+        next_space = cur_location.get_dn();
         next_move = "down";
         break;
       default:
         next_space = null;
     }
 
-    // if an obstacle DOES NOT exist, i.e. there is NOT a key in the "obstacles" for the current location
-    temp_key = cur_location.get_string;
-    if (!(temp_key in obstacles) && !searched.includes(next_space)) {
+    // if an obstacle DOES NOT exist, i.e. there is NOT a key in the "obstacles" for the next location
+    next_str = next_space.get_string();
+    if (!(next_str in obstacles) && !(next_str in searched) &&
+      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
+      (next_space.x >= 0) && (next_space.y >= 0)) {
       path.push(next_move);
-      searched.push(next_space);
-      if (cur_location.get_string == end_pos.get_string) {
+      // store string representation for next space in searched
+
+
+      // switch (next_move) {
+      //   case "right":
+      //     cur_location = cur_location.get_right();
+      //     break;
+      //   case "up":
+      //     cur_location = cur_location.get_up();
+      //     break;
+      //   case "left":
+      //     cur_location = cur_location.get_left();
+      //     break;
+      //   case "down":
+      //     cur_location = cur_location.get_dn();
+      //     break;
+      //   default:
+      //     cur_location = cur_location;
+      // }
+
+      if (cur_location.get_string() == end_pos.get_string()) {
         return path;
       } else {
         ff_return = ff_recur(
           next_space,
           end_pos,
           obstacles,
-          searched,
-          move_actions
+          move_actions, x_bounds, y_bounds,
+          path
         );
 
         if (ff_return != null) {
           return ff_return;
         }
+        searched[next_str] = next_str;
       }
     }
 
