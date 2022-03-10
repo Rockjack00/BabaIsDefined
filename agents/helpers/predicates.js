@@ -1,3 +1,4 @@
+const { nextMove } = require("../../js/simulation");
 const { accessGameState } = require("./helpers");
 const { floodfill_reachable } = require("./pathing");
 
@@ -16,14 +17,14 @@ const { floodfill_reachable } = require("./pathing");
  * @return {array} all objects in yous that are YOU - or all of them - in the current game state.
  */
 function isYou(state, yous) {
-  const players = accessGameState(state, "players");
+    const players = accessGameState(state, "players");
 
-  if (yous.length > 0) {
-    yous = yous.filter((y) => players.includes(y));
-  } else {
-    yous = players;
-  }
-  return yous;
+    if (yous.length > 0) {
+        yous = yous.filter((y) => players.includes(y));
+    } else {
+        yous = players;
+    }
+    return yous;
 }
 
 /**
@@ -34,14 +35,14 @@ function isYou(state, yous) {
  * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
  */
 function isWin(state, wins) {
-  const winnables = accessGameState(state, "winnables");
+    const winnables = accessGameState(state, "winnables");
 
-  if (wins.length > 0) {
-    wins = wins.filter((w) => winnables.includes(w));
-  } else {
-    wins = winnables;
-  }
-  return wins;
+    if (wins.length > 0) {
+        wins = wins.filter((w) => winnables.includes(w));
+    } else {
+        wins = winnables;
+    }
+    return wins;
 }
 
 /**
@@ -51,24 +52,21 @@ function isWin(state, wins) {
  * @param {array} wins possible winnable objects OR an empty array.
  * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
  */
- function isReachable(state, start, target, path) {
-
-
-  if (path.length > 0) {
-    // step through the path. Check if gets to the target
-    var win = false;
-    var nextState = state;
-    for (let step of path) {
-      [nextState, win] = simjs.nextMove(step, nextState);
-      if (win) {
-        return path;
-      }
+function isReachable(state, start, target, path) {
+    if (path.length > 0) {
+        // step through the path. Check if gets to the target
+        var win = false;
+        var nextState = state;
+        for (let step of path) {
+            [nextState, win] = simjs.nextMove(step, nextState);
+            if (win) {
+                return path;
+            }
+        }
+        return [];
+    } else {
+        return floodfill_reachable(state, start, target);
     }
-    return [];
-  } else {
-    return floodfill_reachable(state, start, target);
-  }
-
 }
 
 /**
@@ -78,15 +76,15 @@ function isWin(state, wins) {
  * @param {array} stops possible values of stop to filter OR an empty array.
  * @return {array} all objects in stops that are STOP - or all of them - in the current game state.
  */
- function isStop(state, stops) {
-  const stoppables = accessGameState(state, "stoppables");
+function isStop(state, stops) {
+    const stoppables = accessGameState(state, "stoppables");
 
-  if (stops.length > 0) {
-    stops = stops.filter((s) => stoppables.includes(s));
-  } else {
-    stops = stoppables;
-  }
-  return stops;
+    if (stops.length > 0) {
+        stops = stops.filter((s) => stoppables.includes(s));
+    } else {
+        stops = stoppables;
+    }
+    return stops;
 }
 
 /**
@@ -96,33 +94,122 @@ function isWin(state, wins) {
  * @param {array} pushes possible values of push to filter OR an empty array.
  * @return {array} all objects in pushes that are PUSH - or all of them - in the current game state.
  */
- function isPush(state, pushes) {
-  const pushables = accessGameState(state, "pushables");
+function isPush(state, pushes) {
+    const pushables = accessGameState(state, "pushables");
 
-  if (pushes.length > 0) {
-    pushes = pushes.filter((p) => pushables.includes(p));
-  } else {
-    pushes = pushables;
-  }
-  return pushes;
+    if (pushes.length > 0) {
+        pushes = pushes.filter((p) => pushables.includes(p));
+    } else {
+        pushes = pushables;
+    }
+    return pushes;
 }
 
 /**
- * @description Filter all of the objects that are RULE in the current game state.
+ * @description Get all the rules in the current game state.
  *              If rules is empty, all of the objects that are RULE in the current state.
  * @param {string} state the acsii representation of the current game state.
  * @param {array} rules possible values of rule to filter OR an empty array.
- * @return {array} all objects in rules that are RULE - or all of them - in the current game state.
+ * @return {array} filter out all rules that are active in the current game state.
  */
- function isRule(state, rules) {
-  const state_rules = accessGameState(state, "rules");
+function rule(state, rules) {
+    const state_rules = accessGameState(state, "rules");
 
-  if (rules.length > 0) {
-    rules = rules.filter((r) => state_rules.includes(r));
-  } else {
-    rules = state_rules;
-  }
-  return rules;
+    if (rules.length > 0) {
+        rules = rules.filter((r) => state_rules.includes(r));
+    } else {
+        rules = state_rules;
+    }
+    return rules;
 }
 
-module.exports = { isYou, isWin, isReachable, isStop, isPush, isRule };
+/**
+ * @description Filter all of the objects in the current game state and can actually be pushed.
+ *              If pushes is empty, all of the objects that are PUSH in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} pushes possible values of push to filter OR an empty array.
+ * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state.
+ *
+ */
+function canPushThese(state, pushes) {
+    var outList = [];
+    const yous = isYou(state, []);
+
+    // only check the queries that are actually pushable
+    for (let p in isPush(state, pushes)) {
+        // add a "pushableDirs" attribute to the pushable object (or clear it if it exists)
+        p.prototype.pushableDirs = canPush(state, p, []);
+        if (p.pushableDirs.length() > 0) {
+            outList.append(p);
+        }
+    }
+}
+
+/**
+ * @description Filter all of the directions that an object can actually be pushed.
+ *              If directions is empty, all directions will be checked.
+ * @param {State} state the current game state.
+ * @param {Object} target the object to push.
+ * @param {array} directions possible diretions to filter OR an empty array.
+ * @return {array} directions that the target can be pushed in of those given - or all possible.
+ *
+ */
+function canPush(state, target, directions) {
+    var outList = [];
+    const yous = isYou(state, []);
+
+    if (isPush(state, target) === []) {
+        // target isn't pushable
+        return [];
+    }
+
+    // check all directions if unspecified
+    if (directions === []) {
+        directions = ["up", "down", "right", "left"];
+    }
+
+    for (let c in directions) {
+        let target;
+
+        // get the starting location for this push
+        switch (c) {
+            case "up":
+                target = { x: p.x, y: p.y + 1 }; // start one below
+            case "down":
+                target = { x: p.x, y: p.y - 1 }; // start one above
+            case "left":
+                target = { x: p.x + 1, y: p.y }; // start one to the right
+            case "right":
+                target = { x: p.x - 1, y: p.y - 1 }; // start one to the left
+        }
+
+        // ignoring side effects, greedily see if any YOU object can push p
+        for (let you in yous) {
+            let reachablePath = isReachable(state, you, target, []);
+
+            // check that the direction is reachable
+            if (reachablePath !== []) {
+                // see if it moves in the game state at that direction
+                let pushState = reachablePath.reduce(function (
+                    currState,
+                    step
+                ) {
+                    return simjs.nextMove(step, currState);
+                },
+                state);
+
+                // did the state change?
+                // TODO: we may need to do this a different way when levels become more complex
+                //       maybe could check if a "you" object made it into the target location or something
+                if (pushState !== simjs.nextMove(c, pushState)) {
+                    outList.append(c);
+                    break;
+                }
+            }
+        }
+    }
+
+    return outList;
+}
+
+module.exports = { isYou, isWin, isReachable, isStop, isPush, rule };
