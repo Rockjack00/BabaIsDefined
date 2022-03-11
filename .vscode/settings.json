@@ -1,11 +1,11 @@
 {
-    "editor.defaultFormatter": null,
-    "editor.formatOnSave": true,
-    "[javascript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode",
-      "prettier.tabWidth": 4
-    },
-    "[json]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+  "editor.defaultFormatter": null,
+  "editor.formatOnSave": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "prettier.tabWidth": 4
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  }
 }

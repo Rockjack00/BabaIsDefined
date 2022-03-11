@@ -64,6 +64,25 @@ class Position {
     return new Position(new_x, new_y);
   }
 
+  get_dir(dir_str) {
+    switch (dir_str) {
+      case "right":
+        return path_locs[i].get_right();
+
+      case "left":
+        return path_locs[i].get_left();
+
+      case "up":
+        return path_locs[i].get_up();
+
+      case "down":
+        return path_locs[i].get_dn();
+
+
+    }
+    return null;
+  }
+
   get_string() {
     return "" + this.x + ", " + this.y;
   }
@@ -76,9 +95,9 @@ class Position {
 // todo - Currently the predicate uses (X,Y, Map, Path)
 // todo - what is in Map?
 // todo - path is something that this function will set
-function floodfill_reachable(state, x_obj, y_obj) {
-  start_pos = new Position(x_obj.x, x_obj.y);
-  end_pos = new Position(y_obj.x, y_obj.y);
+function floodfill_reachable(state, start_obj, end_obj) {
+  start_pos = new Position(start_obj.x, start_obj.y);
+  end_pos = new Position(end_obj.x, end_obj.y);
 
   path = floodfill(start_pos, end_pos, state);
 
@@ -141,6 +160,14 @@ function add_to_dict(phys_objs, obstacles) {
   return obstacles;
 }
 
+function game_bound_check(state, next_space) {
+  x_bounds = state["obj_map"][0].length;
+  y_bounds = state["obj_map"].length;
+
+  return (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
+    (next_space.x > 0) && (next_space.y > 0);
+}
+
 // cur_location - Position object
 // goal_pos -  Goal Position
 // searched - reference to Dictionary of already searched locations. Starts empty.
@@ -174,8 +201,7 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
     // if an obstacle DOES NOT exist, i.e. there is NOT a key in the "obstacles" for the next location
     next_str = next_space.get_string();
     if (!(next_str in obstacles) && !(next_str in searched) &&
-      (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
-      (next_space.x > 0) && (next_space.y > 0)) {
+      game_bound_check(state, next_space)) {
       path.push(next_move);
       // store string representation for next space in searched
       searched[next_str] = next_str;
@@ -242,16 +268,25 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
 // A* Pathing
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 
-function a_star_reachable(state, x_obj, y_obj) {
-  start_pos = new Position(x_obj.x, x_obj.y);
-  end_pos = new Position(y_obj.x, y_obj.y);
+function a_star_reachable(state, start_obj, end_obj, push_are_obst) {
+  start_pos = new Position(start_obj.x, start_obj.y);
+  end_pos = new Position(end_obj.x, end_obj.y);
 
-  let { path_moves, path_locations } = a_star(start_pos, end_pos, state);
+  let { path_moves, path_locations } = a_star(start_pos, end_pos, state, push_are_obst);
+
+  return { path_moves, path_locations };
+}
+
+function a_star_avoid_push(state, start_pos, end_pos) {
+  // start_pos = new Position(start_obj.x, start_obj.y);
+  // end_pos = new Position(end_obj.x, end_obj.y);
+
+  let { path_moves, path_locations } = a_star(start_pos, end_pos, state, true);
 
   return path_moves;
 }
 
-function a_star(start_pos, end_pos, state) {
+function a_star(start_pos, end_pos, state, push_are_obst) {
   // only runs for actual moves. Ignores "space" which is "wait"
   range = 4;
 
@@ -275,7 +310,9 @@ function a_star(start_pos, end_pos, state) {
   // stoppables
   const stoppables = accessGameState(state, "stoppables");
   // additional things to avoid
-  // const pushables = accessGameState(state, "pushables");
+  if (push_are_obst) {
+    const pushables = accessGameState(state, "pushables");
+  }
   const words = accessGameState(state, 'words');
 
   // key items into the dictionary by their location string. Order added is not important
@@ -481,4 +518,4 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
 
 
 
-module.exports = { floodfill_reachable, a_star_reachable };
+module.exports = { floodfill_reachable, a_star_reachable, Position, add_to_dict, game_bound_check, a_star_avoid_push };

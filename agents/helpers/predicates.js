@@ -1,28 +1,28 @@
 const { nextMove } = require("../../js/simulation");
-const { accessGameState } = require("./helpers");
-const { floodfill_reachable, a_star_reachable } = require("./pathing");
+const { accessGameState, deepCopy, deepCopyObject } = require("./helpers");
+const { floodfill_reachable, a_star_reachable, Position, add_to_dict, game_bound_check, a_star_avoid_push } = require("./pathing");
 
 const simjs = require("../../js/simulation");
 
 /*  All possible state objects, for reference
  *  let om = state['obj_map'];
-	let bm = state['back_map'];
-	let is_connectors = state['is_connectors'];
-	let rules = state['rules'];
-	let rule_objs = state['rule_objs'];
-	let sort_phys = state['sort_phys'];
-	let phys = state['phys'];
-	let words = state['words'];
-	let p = state['players'];
-	let am = state['auto_movers'];
-	let w = state['winnables'];
-	let u = state['pushables'];
-	let s = state['stoppables'];
-	let k = state['killers'];
-	let n = state['sinkers'];
-	let o = state['overlaps'];
-	let uo = state['unoverlaps'];
-	let f = state['featured'];
+    let bm = state['back_map'];
+    let is_connectors = state['is_connectors'];
+    let rules = state['rules'];
+    let rule_objs = state['rule_objs'];
+    let sort_phys = state['sort_phys'];
+    let phys = state['phys'];
+    let words = state['words'];
+    let p = state['players'];
+    let am = state['auto_movers'];
+    let w = state['winnables'];
+    let u = state['pushables'];
+    let s = state['stoppables'];
+    let k = state['killers'];
+    let n = state['sinkers'];
+    let o = state['overlaps'];
+    let uo = state['unoverlaps'];
+    let f = state['featured'];
  */
 
 /**
@@ -88,7 +88,53 @@ function isReachable(state, start, target, path) {
         }
         return [];
     } else {
-        return a_star_reachable(state, start, target);
+        // try A* but pushables are obsticals
+        [new_path, path_locations] = a_star_reachable(state, start, target, true);
+        if (new_path != []) {
+            return new_path;
+        }
+
+        // try A*, but ignore obstacles. Send this to canClearPath.
+        [new_path, path_locations] = a_star_reachable(state, start, target, false);
+        clearing_path = canClearPath(state, path_locations, start);
+        // simulate new path
+        new_state = deepCopy(state);
+        for (move of path) {
+            let { next_state, won } = simjs.nextMove(move, new_state);
+            new_state = next_state;
+        }
+        // retry A* when pushables are obstacles. Use new state
+        [new_astar, path_locations] = a_star_reachable(new_state, start, target, true);
+
+        // concat clear path and new A*
+        full_path = clearing_path.concat(new_astar);
+
+        return full_path;
+
+    }
+}
+
+/**
+ * @description Filter all of the objects that are WIN in the current game state.
+ *              If wins is empty, all of the objects that are WIN in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} wins possible winnable objects OR an empty array.
+ * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
+ */
+function isReachableAvoidPush(state, start, target, path) {
+    if (path.length > 0) {
+        // step through the path. Check if gets to the target
+        var win = false;
+        var nextState = state;
+        for (let step of path) {
+            [nextState, win] = simjs.nextMove(step, nextState);
+            if (win) {
+                return path;
+            }
+        }
+        return [];
+    } else {
+        return a_star_avoid_push(state, start, target);
     }
 }
 
@@ -250,11 +296,152 @@ function rule(state, rules) {
 }
 
 /**
+ * @description Get a new path to move pushables out of the way of the A* path
+ *              If this cannot be done, return an empty list
+ * @param {Object} state the current game state.
+ * @param {array} path_locs List of locations as path to the goal, ignoring pushables. 
+ * @param {phys_obj} start_obj The start object, likely whatever is YOU.
+ * @return {array} a new path that pushes the obstacles out of the way.
+ *
+ */
+function canClearPath(state, path_locs, start_obj) {
+    pushables = accessGameState(state, "pushables");
+    // TODO - check if pushables includes words?? Will this be an issue?
+    push_dict = {};
+    push_dict = add_to_dict(pushables, push_dict);
+
+    path_dict = {};
+    for (path_loc of path_locs) {
+        path_dict[path_loc.get_string()] = path_loc;
+    }
+
+    // death things
+    const killers = accessGameState(state, "killers");
+    const sinkers = accessGameState(state, "sinkers");
+    // stoppables
+    const stoppables = accessGameState(state, "stoppables");
+
+    // obstacles
+    obst_dict = {};
+    obst_dict = add_to_dict(killers, obstacles);
+    obst_dict = add_to_dict(sinkers, obstacles);
+    obst_dict = add_to_dict(stoppables, obstacles);
+
+    // make a new_State for use in moving the pushables
+    new_state = deepCopy(state);
+
+    // set the last location as the start_bj location
+    last_loc = new Position(start_obj.x, start_obj.y);
+
+    //the running path to move all objects out of the way.
+    running_path = [];
+
+    // step through the path to find pushables that are in the way
+    for (let i = 0; i < path_locs.length; ++i) {
+        cur_str = path_locs[i].get_string();
+        if (cur_str in push_dict) {
+            // try to push out of the way
+            pos_dirs = canPush(new_state, push_dict[cur_str], []);
+
+            chosen_dir = null;
+            for (pos_dir of pos_dirs) {
+                chosen_dir = pos_dir;
+                //step in path direction
+                step_str = cur_str;
+                step_loc = path_locs[i];
+                step_prev_loc = null;
+                while ((step_str in path_dict) && !(step_str in obst_dict) &&
+                    game_bound_check(new_state, step_loc)) {
+                    switch (pos_dir) {
+                        case "right":
+                            step_prev_loc = step_loc;
+                            step_loc = step_loc.get_right();
+                            step_str = step_loc.get_string();
+                            break;
+                        case "up":
+                            step_loc = step_loc.get_up();
+                            step_str = step_loc.get_string();
+                            break;
+                        case "left":
+                            step_loc = step_loc.get_left();
+                            step_str = step_loc.get_string();
+                            break;
+                        case "down":
+                            step_loc = step_loc.get_dn();
+                            step_str = step_loc.get_string();
+                            break;
+                        default:
+                            console.log("While loop error in canClearPath.")
+                    }
+                }
+
+                // check if stepping ended on a obstacle
+                if (!(step_str in obst_dict) &&
+                    game_bound_check(new_state, step_loc)) {
+                    // don't move this direction
+                }
+                else {
+                    break;
+                }
+
+
+            }
+
+            // generate path to move pushable out of the way
+
+            // first, go to the correct side of the pushable
+            side_of_push = path_locs[i].get_dir(chosen_dir);
+
+            //path to side of push
+            start_loc = last_loc;
+            path_to_side = a_star_avoid_push(new_state, start_loc, side_of_push);
+
+            // step in direction until rock not in path. count how many times moved.
+            // side_of_push is start location
+            counter = 0;
+            cur_loc = deepCopyObject(side_of_push);
+            push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
+
+            // do checks on the pushable, then count as move
+
+            while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) &&
+                game_bound_check(new_state, step_loc)) {
+                counter++;
+                cur_loc = cur_loc.get_dir(chosen_dir);
+                push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
+            }
+
+            //set end location
+            last_loc = cur_loc;
+
+            // add the steps of pushing to path to side of push
+            full_path = path_to_side;
+            for (let j = 0; j < counter; j++) {
+                full_path.push(chosen_dir);
+            }
+
+            // now full_path is the path to move this object out of the way
+            // add the full_path to the running_path
+            running_path.concat(full_path);
+
+            // and last_loc is the location YOU end at after pushing the object out of the way
+            // simulate path to get new state. Set to "new_state", for use moving the next pushable
+            for (move of path) {
+                let { next_state, won } = simjs.nextMove(move, new_state);
+                new_state = next_state;
+            }
+        }
+    }
+
+    return running_path;
+}
+
+/**
  * @description Filter all of the objects in the current game state and can actually be pushed.
  *              If pushes is empty, all of the objects that are PUSH in the current state.
  * @param {string} state the acsii representation of the current game state.
  * @param {array} pushes possible values of push to filter OR an empty array.
- * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state.
+ * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state. 
  *
  */
 function canPushThese(state, pushes) {
@@ -334,7 +521,7 @@ function canPush(state, target, directions) {
                 ) {
                     return simjs.nextMove(step, currState)["next_state"];
                 },
-                state);
+                    state);
 
                 // did the state change?
                 // TODO: we may need to do this a different way when levels become more complex
