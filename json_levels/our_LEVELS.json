@@ -1,25 +1,39 @@
 {
-  "levels": [
-    {
-      "id": 0,
-      "name": "test Win is You",
-      "author": "Baba",
-      "ascii": "__________\n_B13....._\n_1......._\n_2......._\n_...bf..._\n_........_\n_........_\n_........_\n_.....F12_\n__________",
-      "solution": "r"
-    },
-    {
-      "id": 1,
-      "name": "Test right 5x",
-      "author": "",
-      "ascii": "__________\n_B12..F13_\n_........_\n_........_\n_........_\n_.b....f._\n_........_\n_........_\n_........_\n__________",
-      "solution": "rrrrr"
-    },
-    {
-      "id": 2,
-      "name": "Test odd path",
-      "author": "Baba",
-      "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..._\n_..w...w._\n_...wwww._\n_........_\n_W16....._\n__________",
-      "solution": "uurrrrrrddlldllu"
-    }
-  ]
+    "levels": [
+        {
+            "id": 0,
+            "name": "test Win is You",
+            "author": "Baba",
+            "ascii": "__________\n_B13....._\n_1......._\n_2......._\n_...bf..._\n_........_\n_........_\n_........_\n_.....F12_\n__________",
+            "solution": "r"
+        },
+        {
+            "id": 1,
+            "name": "Test right 5x",
+            "author": "",
+            "ascii": "__________\n_B12..F13_\n_........_\n_........_\n_........_\n_.b....f._\n_........_\n_........_\n_........_\n__________",
+            "solution": "rrrrr"
+        },
+        {
+            "id": 2,
+            "name": "Test odd path",
+            "author": "Baba",
+            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..._\n_..w...w._\n_...wwww._\n_........_\n_W16....._\n__________",
+            "solution": "uurrrrrrddlldllu"
+        },
+        {
+            "id": 3,
+            "name": "Test pushable object",
+            "author": "Rockjack00 + PCG.js",
+            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..r_\n_..w...w._\n_...wwww._\n_........_\n_W16..R15_\n__________",
+            "solution": ""
+        },
+        {
+            "id": 4,
+            "name": "Test multiple pushables in the way",
+            "author": "Rockjack00 + PCG.js",
+            "ascii": "________________\n_B12........F13_\n_.............._\n_..wwwwwwwwwww._\n_.bw....w.r..w._\n_..w..w...w.fw._\n_..wrrwwwwwwww._\n_.............._\n_W16.....R15..._\n________________",
+            "solution": ""
+        }
+    ]
 }

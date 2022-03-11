@@ -1,4 +1,5 @@
-const { isYou, isWin, isReachable } = require("./predicates");
+const { isYou, isWin, isReachable, canPushThese } = require("./predicates");
+const simjs = require("../../js/simulation");
 
 // Optionally do eager evaluation (depth first)
 const EAGER = false;
@@ -21,11 +22,8 @@ function solve_level(state) {
         let opts = isWin(state, yous);
 
         if (opts.length > 0) {
-            const plural = opts.length > 1;
-            console.log(
-                `${opts} ${plural ? "are" : "is a"} winable object${
-                    plural ? "s" : ""
-                }.`
+            opts.forEach((opt) =>
+                console.log(`\t{ ${opt.name} } is a winable object.`)
             );
 
             // Do nothing and you will win!
@@ -43,8 +41,12 @@ function solve_level(state) {
         for (let w of wins) {
             p = isReachable(state, y, w, []);
 
-            if (p != []) {
-                console.log(`${y} can reach ${w} by taking the path ${p}.`);
+            if (p.length > 0) {
+                console.log(
+                    `\t{ ${y.name} } can reach { ${
+                        w.name
+                    } } by taking the path { ${simjs.miniSol(p)} }.`
+                );
                 if (EAGER) {
                     return p;
                 }

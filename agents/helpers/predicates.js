@@ -1,6 +1,7 @@
 const { nextMove } = require("../../js/simulation");
 const { accessGameState } = require("./helpers");
 const { floodfill_reachable } = require("./pathing");
+const simjs = require("../../js/simulation");
 
 /**
  * Each predicate in this file is a filter that will return either a filtered array of given options,
@@ -133,16 +134,17 @@ function rule(state, rules) {
  */
 function canPushThese(state, pushes) {
     var outList = [];
-    const yous = isYou(state, []);
 
     // only check the queries that are actually pushable
-    for (let p in isPush(state, pushes)) {
+    isPush(state, pushes).forEach((p) => {
         // add a "pushableDirs" attribute to the pushable object (or clear it if it exists)
-        p.prototype.pushableDirs = canPush(state, p, []);
-        if (p.pushableDirs.length() > 0) {
-            outList.append(p);
+        let pushableDirs = canPush(state, p, []);
+        if (pushableDirs.length > 0) {
+            outList.push({ obj: p, pushableDirs: pushableDirs });
         }
-    }
+    });
+
+    return outList;
 }
 
 /**
@@ -158,51 +160,66 @@ function canPush(state, target, directions) {
     var outList = [];
     const yous = isYou(state, []);
 
-    if (isPush(state, target) === []) {
+    if (isPush(state, target).length < 1) {
         // target isn't pushable
         return [];
     }
 
     // check all directions if unspecified
-    if (directions === []) {
+    if (directions.length < 1) {
         directions = ["up", "down", "right", "left"];
     }
 
-    for (let c in directions) {
-        let target;
+    for (let c of directions) {
+        let pushTarget;
 
         // get the starting location for this push
         switch (c) {
             case "up":
-                target = { x: p.x, y: p.y + 1 }; // start one below
+                pushTarget = { x: target.x, y: target.y + 1 }; // start one below
+                break;
             case "down":
-                target = { x: p.x, y: p.y - 1 }; // start one above
+                pushTarget = { x: target.x, y: target.y - 1 }; // start one above
+                break;
+
             case "left":
-                target = { x: p.x + 1, y: p.y }; // start one to the right
+                pushTarget = { x: target.x + 1, y: target.y }; // start one to the right
+                break;
+
             case "right":
-                target = { x: p.x - 1, y: p.y - 1 }; // start one to the left
+                pushTarget = { x: target.x - 1, y: target.y - 1 }; // start one to the left
+                break;
+
+            default:
+                console.error(`Cannot read direction "${c}"`);
         }
 
-        // ignoring side effects, greedily see if any YOU object can push p
-        for (let you in yous) {
-            let reachablePath = isReachable(state, you, target, []);
+        // ignoring side effects, greedily see if any YOU object can push the target
+
+        for (let you of yous) {
+            let reachablePath = isReachable(state, you, pushTarget, []);
 
             // check that the direction is reachable
-            if (reachablePath !== []) {
+            if (reachablePath.length > 0) {
                 // see if it moves in the game state at that direction
+                // TODO: change this to simjs.newState() - its probably a lot faster
                 let pushState = reachablePath.reduce(function (
                     currState,
                     step
                 ) {
-                    return simjs.nextMove(step, currState);
+                    return simjs.nextMove(step, currState)["next_state"];
                 },
                 state);
 
                 // did the state change?
                 // TODO: we may need to do this a different way when levels become more complex
                 //       maybe could check if a "you" object made it into the target location or something
-                if (pushState !== simjs.nextMove(c, pushState)) {
-                    outList.append(c);
+
+                if (
+                    simjs.showState(pushState) !==
+                    simjs.showState(simjs.nextMove(c, pushState)["next_state"])
+                ) {
+                    outList.push(c);
                     break;
                 }
             }
@@ -212,4 +229,13 @@ function canPush(state, target, directions) {
     return outList;
 }
 
-module.exports = { isYou, isWin, isReachable, isStop, isPush, rule };
+module.exports = {
+    isYou,
+    isWin,
+    isReachable,
+    isStop,
+    isPush,
+    rule,
+    canPush,
+    canPushThese,
+};
