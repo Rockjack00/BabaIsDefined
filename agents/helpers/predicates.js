@@ -4,6 +4,27 @@ const { floodfill_reachable, a_star_reachable } = require("./pathing");
 
 const simjs = require("../../js/simulation");
 
+/*  All possible state objects, for reference
+ *  let om = state['obj_map'];
+	let bm = state['back_map'];
+	let is_connectors = state['is_connectors'];
+	let rules = state['rules'];
+	let rule_objs = state['rule_objs'];
+	let sort_phys = state['sort_phys'];
+	let phys = state['phys'];
+	let words = state['words'];
+	let p = state['players'];
+	let am = state['auto_movers'];
+	let w = state['winnables'];
+	let u = state['pushables'];
+	let s = state['stoppables'];
+	let k = state['killers'];
+	let n = state['sinkers'];
+	let o = state['overlaps'];
+	let uo = state['unoverlaps'];
+	let f = state['featured'];
+ */
+
 /**
  * Each predicate in this file is a filter that will return either a filtered array of given options,
  * or all of the options if if is empty.
@@ -72,21 +93,21 @@ function isReachable(state, start, target, path) {
 }
 
 /**
- * @description Filter all of the objects that are STOP in the current game state.
- *              If stops is empty, all of the objects that are STOP in the current state.
+ * @description Filter all of the objects that are MOVE in the current game state.
+ *              If movers is empty, all of the objects that are MOVE in the current state.
  * @param {string} state the acsii representation of the current game state.
- * @param {array} stops possible values of stop to filter OR an empty array.
- * @return {array} all objects in stops that are STOP - or all of them - in the current game state.
+ * @param {array} movers possible values of move to filter OR an empty array.
+ * @return {array} all objects in movers that are MOVE - or all of them - in the current game state.
  */
-function isStop(state, stops) {
-    const stoppables = accessGameState(state, "stoppables");
+function isMove(state, movers) {
+    const auto_movers = accessGameState(state, "auto_movers");
 
-    if (stops.length > 0) {
-        stops = stops.filter((s) => stoppables.includes(s));
+    if (movers.length > 0) {
+        movers = movers.filter((s) => auto_movers.includes(s));
     } else {
-        stops = stoppables;
+        movers = auto_movers;
     }
-    return stops;
+    return movers;
 }
 
 /**
@@ -105,6 +126,109 @@ function isPush(state, pushes) {
         pushes = pushables;
     }
     return pushes;
+}
+
+/**
+ * @description Filter all of the objects that are STOP in the current game state.
+ *              If stops is empty, all of the objects that are STOP in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} stops possible values of stop to filter OR an empty array.
+ * @return {array} all objects in stops that are STOP - or all of them - in the current game state.
+ */
+function isStop(state, stops) {
+    const stoppables = accessGameState(state, "stoppables");
+
+    if (stops.length > 0) {
+        stops = stops.filter((s) => stoppables.includes(s));
+    } else {
+        stops = stoppables;
+    }
+    return stops;
+}
+
+
+/**
+ * @description Filter all of the objects that are KILL in the current game state.
+ *              If kills is empty, all of the objects that are KILL in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} kills possible values of kill to filter OR an empty array.
+ * @return {array} all objects in kills that are KILL - or all of them - in the current game state.
+ */
+function isKill(state, kills) {
+    const killers = accessGameState(state, "killers");
+
+    if (kills.length > 0) {
+        kills = kills.filter((s) => killers.includes(s));
+    } else {
+        kills = killers;
+    }
+    return kills;
+}
+
+/**
+ * @description Filter all of the objects that are SINK in the current game state.
+ *              If sinks is empty, all of the objects that are SINK in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} sinks possible values of sink to filter OR an empty array.
+ * @return {array} all objects in sinks that are SINK - or all of them - in the current game state.
+ */
+function isSink(state, sinks) {
+    const sinkers = accessGameState(state, "sinkers");
+
+    if (sinks.length > 0) {
+        sinks = sinks.filter((s) => sinkers.includes(s));
+    } else {
+        sinks = sinkers;
+    }
+    return sinks;
+}
+
+/**
+ * @description Filter all of the objects that are HOT in the current game state.
+ *              If hot_objs is empty, all of the objects that are HOT in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} hot_objs possible values of hot to filter OR an empty array.
+ * @return {array} all objects in hot_objs that are HOT - or all of them - in the current game state.
+ */
+function isHot(state, hot_objs) {
+    const featured = accessGameState(state, "featured");
+
+    // if there are no hot objects, return empty list
+    if (!("hot" in featured))
+        return [];
+
+    const is_hot_objs = featured["hot"];
+
+    if (hot_objs.length > 0) {
+        hot_objs = hot_objs.filter((s) => is_hot_objs.includes(s));
+    } else {
+        hot_objs = is_hot_objs;
+    }
+    return hot_objs;
+}
+
+/**
+ * @description Filter all of the objects that are MELT in the current game state.
+ *              If melts is empty, all of the objects that are MELT in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} melts possible values of melt to filter OR an empty array.
+ * @return {array} all objects in melts that are MELT - or all of them - in the current game state.
+ */
+function isMelt(state, melts) {
+    const featured = accessGameState(state, "featured");
+
+    // if there are no melt objects, return empty list
+    if (!("melt" in featured))
+        return [];
+
+    const is_melts = featured["melt"];
+
+    if (melts.length > 0) {
+        melts = melts.filter((s) => is_melts.includes(s));
+    } else {
+        melts = is_melts;
+    }
+    return melts;
 }
 
 /**
@@ -234,8 +358,13 @@ module.exports = {
     isYou,
     isWin,
     isReachable,
-    isStop,
+    isMove,
     isPush,
+    isStop,
+    isKill,
+    isSink,
+    isHot,
+    isMelt,
     rule,
     canPush,
     canPushThese,
