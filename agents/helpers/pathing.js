@@ -363,6 +363,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
 
     // c) generate q's 4 successors and set their 
     //    parents to q
+    // TODO: put in loop
 
     // for refence: const possActions = ["space", "right", "up", "left", "down"];
 
