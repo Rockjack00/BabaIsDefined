@@ -1,6 +1,6 @@
 const { nextMove } = require("../../js/simulation");
 const { accessGameState } = require("./helpers");
-const { floodfill_reachable } = require("./pathing");
+const { floodfill_reachable, a_star_reachable } = require("./pathing");
 
 /**
  * Each predicate in this file is a filter that will return either a filtered array of given options,
@@ -65,7 +65,7 @@ function isReachable(state, start, target, path) {
         }
         return [];
     } else {
-        return floodfill_reachable(state, start, target);
+        return a_star_reachable(state, start, target);
     }
 }
 
@@ -196,7 +196,7 @@ function canPush(state, target, directions) {
                 ) {
                     return simjs.nextMove(step, currState);
                 },
-                state);
+                    state);
 
                 // did the state change?
                 // TODO: we may need to do this a different way when levels become more complex
