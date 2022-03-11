@@ -19,12 +19,12 @@ For VSCode, add the following to `.vscode/settings.json`:
 
 ```json
 {
-  "editor.defaultFormatter": null,
-  "editor.formatOnSave": true,
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "prettier.tabWidth": 4
-  }
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": true,
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "prettier.tabWidth": 4
+    }
 }
 ```
 
@@ -53,11 +53,11 @@ This version uses the JS implementation originally found on the [Baba is Y'all](
 
 ### Requirements
 
-- NodeJS
-- Web-browser (preferably Google Chrome)
-- Terminal
-- A text editor (for creating agents)
-- Tau-prolog (A Prolog interpreter for JavaScript)
+-   NodeJS
+-   Web-browser (preferably Google Chrome)
+-   Terminal
+-   A text editor (for creating agents)
+-   Tau-prolog (A Prolog interpreter for JavaScript)
 
 ### Installation
 
