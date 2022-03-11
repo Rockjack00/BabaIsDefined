@@ -110,6 +110,7 @@ function isMove(state, movers) {
     return movers;
 }
 
+// TODO: add words as pushables
 /**
  * @description Filter all of the objects that are PUSH in the current game state.
  *              If pushes is empty, all of the objects that are PUSH in the current state.
