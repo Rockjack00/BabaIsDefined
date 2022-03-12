@@ -1,5 +1,5 @@
 const { nextMove } = require("../../js/simulation");
-const { accessGameState, deepCopy, deepCopyObject, Position, add_to_dict, permutations_of_list } = require("./helpers");
+const { accessGameState, deepCopy, deepCopyObject, Position, add_to_dict, permutations_of_list, static } = require("./helpers");
 const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push } = require("./pathing");
 
 const simjs = require("../../js/simulation");
@@ -205,6 +205,7 @@ function isMove(state, movers) {
  */
 function isPush(state, pushes) {
     const pushables = accessGameState(state, "pushables");
+    pushables.concat(accessGameState(state, "words"));
 
     if (pushes.length > 0) {
         pushes = pushes.filter((p) => pushables.includes(p));
@@ -231,7 +232,6 @@ function isStop(state, stops) {
     }
     return stops;
 }
-
 
 /**
  * @description Filter all of the objects that are KILL in the current game state.
@@ -280,8 +280,7 @@ function isHot(state, hot_objs) {
     const featured = accessGameState(state, "featured");
 
     // if there are no hot objects, return empty list
-    if (!("hot" in featured))
-        return [];
+    if (!("hot" in featured)) return [];
 
     const is_hot_objs = featured["hot"];
 
@@ -304,8 +303,7 @@ function isMelt(state, melts) {
     const featured = accessGameState(state, "featured");
 
     // if there are no melt objects, return empty list
-    if (!("melt" in featured))
-        return [];
+    if (!("melt" in featured)) return [];
 
     const is_melts = featured["melt"];
 
@@ -315,24 +313,6 @@ function isMelt(state, melts) {
         melts = is_melts;
     }
     return melts;
-}
-
-/**
- * @description Get all the rules in the current game state.
- *              If rules is empty, all of the objects that are RULE in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} rules possible values of rule to filter OR an empty array.
- * @return {array} filter out all rules that are active in the current game state.
- */
-function rule(state, rules) {
-    const state_rules = accessGameState(state, "rules");
-
-    if (rules.length > 0) {
-        rules = rules.filter((r) => state_rules.includes(r));
-    } else {
-        rules = state_rules;
-    }
-    return rules;
 }
 
 /**
@@ -516,7 +496,6 @@ function canPushThese(state, pushes) {
 
     // only check the queries that are actually pushable
     isPush(state, pushes).forEach((p) => {
-        // add a "pushableDirs" attribute to the pushable object (or clear it if it exists)
         let pushableDirs = canPush(state, p, []);
         if (pushableDirs.length > 0) {
             outList.push({ obj: p, pushableDirs: pushableDirs });
@@ -545,6 +524,11 @@ function canPush(state, target, directions) {
         return [];
     }
 
+    if (static(state, target)) {
+        // target is inacessable
+        return [];
+    }
+
     // check all directions if unspecified
     if (directions.length < 1) {
         directions = ["up", "down", "right", "left"];
@@ -556,18 +540,18 @@ function canPush(state, target, directions) {
         // get the starting location for this push
         switch (c) {
             case "up":
-                pushTarget = new Position(target.x, target.y + 1); // start one below
+                pushTarget = { x: target.x, y: target.y + 1 }; // start one below
                 break;
             case "down":
-                pushTarget = new Position(target.x, target.y - 1); // start one above
+                pushTarget = { x: target.x, y: target.y - 1 }; // start one above
                 break;
 
             case "left":
-                pushTarget = new Position(target.x + 1, target.y); // start one to the right
+                pushTarget = { x: target.x + 1, y: target.y }; // start one to the right
                 break;
 
             case "right":
-                pushTarget = new Position(target.x - 1, target.y); // start one to the left
+                pushTarget = { x: target.x - 1, y: target.y - 1 }; // start one to the left
                 break;
 
             default:
@@ -577,31 +561,78 @@ function canPush(state, target, directions) {
         // ignoring side effects, greedily see if any YOU object can push the target
 
         for (let you of yous) {
-            you_pos = new Position(you.x, you.y);
-            let [reachablePath, locs] = a_star_avoid_push(state, you_pos, pushTarget);
+            let reachablePath = isReachable(state, you, pushTarget, []);
 
-            // check that the direction is reachable
-            if (reachablePath.length > 0) {
-                // see if it moves in the game state at that direction
-                // TODO: change this to simjs.newState() - its probably a lot faster
-                let pushState = reachablePath.reduce(function (
-                    currState,
-                    step
-                ) {
-                    return simjs.nextMove(step, currState)["next_state"];
-                },
-                    state);
-
-                // did the state change?
-                // TODO: we may need to do this a different way when levels become more complex
-                //       maybe could check if a "you" object made it into the target location or something
-
-                if (
-                    simjs.showState(pushState) !==
-                    simjs.showState(simjs.nextMove(c, pushState)["next_state"])
-                ) {
-                    outList.push(c);
+            // get the starting location for this push
+            switch (c) {
+                case "up":
+                    pushTarget = new Position(target.x, target.y + 1); // start one below
                     break;
+                case "down":
+                    pushTarget = new Position(target.x, target.y - 1); // start one above
+                    break;
+
+                case "left":
+                    pushTarget = new Position(target.x + 1, target.y); // start one to the right
+                    break;
+
+                case "right":
+                    pushTarget = new Position(target.x - 1, target.y); // start one to the left
+                    break;
+
+                default:
+                    console.error(`Cannot read direction "${c}"`);
+            }
+
+            // ignoring side effects, greedily see if any YOU object can push the target
+
+            for (let you of yous) {
+                you_pos = new Position(you.x, you.y);
+                let [reachablePath, locs] = a_star_avoid_push(state, you_pos, pushTarget);
+
+                // check that the direction is reachable
+                if (reachablePath.length > 0) {
+                    // see if it moves in the game state at that direction
+                    // TODO: change this to simjs.newState() - its probably a lot faster
+                    let pushState = reachablePath.reduce(function (
+                        currState,
+                        step
+                    ) {
+                        return simjs.nextMove(step, currState)["next_state"];
+                    },
+                        state);
+
+                    // did the state change?
+                    // TODO: we may need to do this a different way when levels become more complex
+                    //       maybe could check if a "you" object made it into the target location or something
+
+                    if (
+                        simjs.showState(pushState) !==
+                        simjs.showState(simjs.nextMove(c, pushState)["next_state"])
+                    ) {
+                        outList.push(c);
+                        break;
+                    }
+                }
+                // check that the direction is reachable
+                if (reachablePath.length > 0) {
+                    // see if it moves in the game state at that direction
+                    // TODO: change this to simjs.newState() - its probably a lot faster
+                    let pushState = reachablePath.reduce(function (currState, step) {
+                        return simjs.nextMove(step, currState)["next_state"];
+                    }, state);
+
+                    // did the state change?
+                    // TODO: we may need to do this a different way when levels become more complex
+                    //       maybe could check if a "you" object made it into the target location or something
+
+                    if (
+                        simjs.showState(pushState) !==
+                        simjs.showState(simjs.nextMove(c, pushState)["next_state"])
+                    ) {
+                        outList.push(c);
+                        break;
+                    }
                 }
             }
         }
@@ -621,7 +652,6 @@ module.exports = {
     isSink,
     isHot,
     isMelt,
-    rule,
     canPush,
     canPushThese,
 };
