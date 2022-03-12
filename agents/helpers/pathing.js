@@ -1,5 +1,5 @@
 
-const { accessGameState } = require("./helpers");
+const { accessGameState, add_to_dict, Position } = require("./helpers");
 
 // for Reference, this are the position actions
 const possActions = ["space", "right", "up", "left", "down"];
@@ -30,63 +30,63 @@ class Node {
   }
 }
 
-class Position {
-  //assuming 0,0 starts in top left, and vertical is y, horizontal is x
+// class Position {
+//   //assuming 0,0 starts in top left, and vertical is y, horizontal is x
 
-  // todo - relocate this to a Typescript file?
+//   // todo - relocate this to a Typescript file?
 
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-  }
+//   constructor(x, y) {
+//     this.x = x;
+//     this.y = y;
+//   }
 
-  get_up() {
-    var new_x = this.x;
-    var new_y = this.y - 1;
-    return new Position(new_x, new_y);
-  }
+//   get_up() {
+//     var new_x = this.x;
+//     var new_y = this.y - 1;
+//     return new Position(new_x, new_y);
+//   }
 
-  get_dn() {
-    var new_x = this.x;
-    var new_y = this.y + 1;
-    return new Position(new_x, new_y);
-  }
+//   get_dn() {
+//     var new_x = this.x;
+//     var new_y = this.y + 1;
+//     return new Position(new_x, new_y);
+//   }
 
-  get_left() {
-    var new_x = this.x - 1;
-    var new_y = this.y;
-    return new Position(new_x, new_y);
-  }
+//   get_left() {
+//     var new_x = this.x - 1;
+//     var new_y = this.y;
+//     return new Position(new_x, new_y);
+//   }
 
-  get_right() {
-    var new_x = this.x + 1;
-    var new_y = this.y;
-    return new Position(new_x, new_y);
-  }
+//   get_right() {
+//     var new_x = this.x + 1;
+//     var new_y = this.y;
+//     return new Position(new_x, new_y);
+//   }
 
-  get_dir(dir_str) {
-    switch (dir_str) {
-      case "right":
-        return path_locs[i].get_right();
+//   get_dir(dir_str) {
+//     switch (dir_str) {
+//       case "right":
+//         return this.get_right();
 
-      case "left":
-        return path_locs[i].get_left();
+//       case "left":
+//         return this.get_left();
 
-      case "up":
-        return path_locs[i].get_up();
+//       case "up":
+//         return this.get_up();
 
-      case "down":
-        return path_locs[i].get_dn();
+//       case "down":
+//         return this.get_dn();
 
 
-    }
-    return null;
-  }
+//     }
+//     return null;
+//   }
 
-  get_string() {
-    return "" + this.x + ", " + this.y;
-  }
-}
+//   get_string() {
+//     return "" + this.x + ", " + this.y;
+//   }
+// }
 
 //TODO - Return what is preventing movement. An array that marks what types of objects are in the way.
 // - to do this, we need to edit the inputs to floodfill reachable
@@ -150,15 +150,15 @@ function floodfill(start_pos, end_pos, state) {
   return path;
 }
 
-// adds all items in the list to the dictionary, keyed by their location.
-function add_to_dict(phys_objs, obstacles) {
-  for (const obj of phys_objs) {
-    temp_pt = new Position(obj.x, obj.y);
-    obstacles[temp_pt.get_string()] = obj;
-  }
-
-  return obstacles;
-}
+// NOW IN helpers.js
+// // adds all items in the list to the dictionary, keyed by their location.
+// function add_to_dict(phys_objs, obstacles) {
+//   for (const obj of phys_objs) {
+//     temp_pt = new Position(obj.x, obj.y);
+//     obstacles[temp_pt.get_string()] = obj;
+//   }
+//   return obstacles;
+// }
 
 function game_bound_check(state, next_space) {
   x_bounds = state["obj_map"][0].length;
@@ -268,25 +268,23 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
 // A* Pathing
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 
-function a_star_reachable(state, start_obj, end_obj, push_are_obst) {
+function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these) {
   start_pos = new Position(start_obj.x, start_obj.y);
   end_pos = new Position(end_obj.x, end_obj.y);
 
-  let { path_moves, path_locations } = a_star(start_pos, end_pos, state, push_are_obst);
-
-  return { path_moves, path_locations };
+  return a_star(start_pos, end_pos, state, push_are_obst, avoid_these);
 }
 
 function a_star_avoid_push(state, start_pos, end_pos) {
   // start_pos = new Position(start_obj.x, start_obj.y);
   // end_pos = new Position(end_obj.x, end_obj.y);
 
-  let { path_moves, path_locations } = a_star(start_pos, end_pos, state, true);
 
-  return path_moves;
+
+  return a_star(start_pos, end_pos, state, true, []);
 }
 
-function a_star(start_pos, end_pos, state, push_are_obst) {
+function a_star(start_pos, end_pos, state, push_are_obst, avoid_these) {
   // only runs for actual moves. Ignores "space" which is "wait"
   range = 4;
 
@@ -310,8 +308,19 @@ function a_star(start_pos, end_pos, state, push_are_obst) {
   // stoppables
   const stoppables = accessGameState(state, "stoppables");
   // additional things to avoid
+  const pushables = accessGameState(state, "pushables");
   if (push_are_obst) {
-    const pushables = accessGameState(state, "pushables");
+    obstacles = add_to_dict(pushables, obstacles);
+  }
+  else {
+    push_dict = {}
+    push_dict = add_to_dict(pushables, push_dict);
+
+    // add avoid_these to obstacle  
+    for (avoid_this of avoid_these) {
+      avoid_str = avoid_this.get_string();
+      obstacles[avoid_str] = push_dict[avoid_str];
+    }
   }
   const words = accessGameState(state, 'words');
 
@@ -319,7 +328,6 @@ function a_star(start_pos, end_pos, state, push_are_obst) {
   obstacles = add_to_dict(killers, obstacles);
   obstacles = add_to_dict(sinkers, obstacles);
   obstacles = add_to_dict(stoppables, obstacles);
-  // obstacles = add_to_dict(pushables, obstacles);
   obstacles = add_to_dict(words, obstacles);
 
   x_bounds = state["obj_map"][0].length;
@@ -334,7 +342,7 @@ function a_star(start_pos, end_pos, state, push_are_obst) {
     path_moves = get_moves(path_end_node);
     path_locations = get_move_positions(path_end_node);
   }
-  return { path_moves, path_locations };
+  return [path_moves, path_locations];
 }
 
 function get_moves(node) {
@@ -511,7 +519,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
 
     // end (while loop)
   }
-  return null;
+  return start_node;
 }
 
 

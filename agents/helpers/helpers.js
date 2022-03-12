@@ -1,11 +1,79 @@
 // MAKE SURE NOT TO HAVE CIRCULAR DEPENDENCIES
 
+class Position {
+  //assuming 0,0 starts in top left, and vertical is y, horizontal is x
+
+  // todo - relocate this to a Typescript file?
+
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  get_up() {
+    var new_x = this.x;
+    var new_y = this.y - 1;
+    return new Position(new_x, new_y);
+  }
+
+  get_dn() {
+    var new_x = this.x;
+    var new_y = this.y + 1;
+    return new Position(new_x, new_y);
+  }
+
+  get_left() {
+    var new_x = this.x - 1;
+    var new_y = this.y;
+    return new Position(new_x, new_y);
+  }
+
+  get_right() {
+    var new_x = this.x + 1;
+    var new_y = this.y;
+    return new Position(new_x, new_y);
+  }
+
+  get_dir(dir_str) {
+    switch (dir_str) {
+      case "right":
+        return this.get_right();
+
+      case "left":
+        return this.get_left();
+
+      case "up":
+        return this.get_up();
+
+      case "down":
+        return this.get_dn();
+
+
+    }
+    return null;
+  }
+
+  get_string() {
+    return "" + this.x + ", " + this.y;
+  }
+}
+
+
 // Returns a list of phys_obj based on the corresponding element
 function accessGameState(state, element) {
   //   const currState = {};
   //   newState(currState, ascii_map);
   game_elements = state[element];
   return game_elements;
+}
+
+function add_to_dict(phys_objs, dictionary) {
+  for (const obj of phys_objs) {
+    temp_pt = new Position(obj.x, obj.y);
+    dictionary[temp_pt.get_string()] = obj;
+  }
+
+  return dictionary;
 }
 
 //Both DEEPCOPY code blocks from default_AGENT.js, by Milk 
@@ -43,6 +111,44 @@ function deepCopyObject(obj) {
   }
   return tempObj;
 }
+/**
+ * @description: Example: [a,b,c] => [[a],[b],[c],[a,b],[a,c],[b,c]]
+ */
+function permutations_of_list(start_list) {
+  if (start_list.length < 2) {
+    return [start_list];
+  }
+  if (start_list.length == 2) {
+    list_a = [[start_list[0]]];
+    list_a.push([start_list[1]])
+    list_a.push(deepCopy(start_list));
+    return list_a;
+  }
+
+  perms = [];
+  index = 0;
+  temp_list = [];
+  for (item of start_list) {
+    temp_list.push(item);
+  }
+  perms.concat(temp_list);
+  index++;
+
+  while (index < start_list.length) {
+    prev_list = deepCopy(temp_list);
+    temp_list = []
+    for (let i = 0; i < prev_list.length - 1; i++) {
+      for (let j = i + 1; j < start_list.length; j++) {
+        temp_list.push(prev_list[i].push(start_list[j]));
+      }
+    }
+    perms.concat(temp_list);
+  }
+
+  perms.push(start_list);
+
+  return perms;
+}
 
 
 
@@ -55,4 +161,4 @@ function deepCopyObject(obj) {
 //   }
 // }
 
-module.exports = { accessGameState, deepCopy, deepCopyObject };
+module.exports = { accessGameState, deepCopy, deepCopyObject, add_to_dict, Position, permutations_of_list };

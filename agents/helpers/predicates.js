@@ -1,6 +1,6 @@
 const { nextMove } = require("../../js/simulation");
-const { accessGameState, deepCopy, deepCopyObject } = require("./helpers");
-const { floodfill_reachable, a_star_reachable, Position, add_to_dict, game_bound_check, a_star_avoid_push } = require("./pathing");
+const { accessGameState, deepCopy, deepCopyObject, Position, add_to_dict, permutations_of_list } = require("./helpers");
+const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push } = require("./pathing");
 
 const simjs = require("../../js/simulation");
 
@@ -67,6 +67,12 @@ function isWin(state, wins) {
     }
     return wins;
 }
+/**
+ * @description Makes a duplicate of the state. To avoid pass by reference issues
+ */
+function copy_state(state) {
+    return simjs.newState(simjs.parseMap(simjs.showState(state)));
+}
 
 /**
  * @description Filter all of the objects that are WIN in the current game state.
@@ -89,22 +95,56 @@ function isReachable(state, start, target, path) {
         return [];
     } else {
         // try A* but pushables are obsticals
-        [new_path, path_locations] = a_star_reachable(state, start, target, true);
-        if (new_path != []) {
+        let new_path, path_locations;
+        // TODO - a_star_reachable needs to return blank when no path found.
+        [new_path, path_locations] = a_star_reachable(state, start, target, true, []);
+        if (new_path.length != 0) {
             return new_path;
         }
 
         // try A*, but ignore obstacles. Send this to canClearPath.
-        [new_path, path_locations] = a_star_reachable(state, start, target, false);
-        clearing_path = canClearPath(state, path_locations, start);
+        [new_path, path_locations] = a_star_reachable(state, start, target, false, []);
+        [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, []);
+
         // simulate new path
-        new_state = deepCopy(state);
-        for (move of path) {
-            let { next_state, won } = simjs.nextMove(move, new_state);
-            new_state = next_state;
-        }
+        let new_state = copy_state(state);
+        new_state = clearing_path.reduce(function (currState, step) {
+            return simjs.nextMove(step, currState)["next_state"];
+        }, new_state);
+
         // retry A* when pushables are obstacles. Use new state
-        [new_astar, path_locations] = a_star_reachable(new_state, start, target, true);
+        [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
+
+        // if it cannot get to the goal after clearing the path, 
+        // try A* and clear path again, but consider the last pushable an obstacle.
+        // retry A*
+        // do this until no pushables are left. Return empty list if this happens.
+        if (new_astar.length == 0) {
+            avoid_these_1 = moved_pushables;
+            avoid_perms = permutations_of_list(avoid_these_1);
+            for (avoid_these of avoid_perms) {
+                while ((new_astar.length == 0) && (clearing_path.length != 0)) {
+                    // try A* and clear path again, but consider the last pushable an obstacle.
+                    [new_astar, path_locations] = a_star_reachable(state, start, target, false, avoid_these);
+                    [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, avoid_these);
+
+                    // simulate new path
+                    let new_state = state;
+                    new_state = clearing_path.reduce(function (currState, step) {
+                        return simjs.nextMove(step, currState)["next_state"];
+                    }, new_state);
+
+                    // retry A* when pushables are obstacles. Use new state
+                    [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
+
+                    avoid_these = avoid_these.concat(moved_pushables);
+
+                }
+                if (new_astar.length != 0) {
+                    break;
+                }
+            }
+        }
 
         // concat clear path and new A*
         full_path = clearing_path.concat(new_astar);
@@ -301,13 +341,17 @@ function rule(state, rules) {
  * @param {Object} state the current game state.
  * @param {array} path_locs List of locations as path to the goal, ignoring pushables. 
  * @param {phys_obj} start_obj The start object, likely whatever is YOU.
- * @return {array} a new path that pushes the obstacles out of the way.
+ * @param {array} avoid_these Avoid these pushable locations, because a previous time they caused a loss.
+ * @return {[array,array]} a new path that pushes the obstacles out of the way.
+ *                          and a list of the moved obstacles.
  *
  */
-function canClearPath(state, path_locs, start_obj) {
+function canClearPath(state, path_locs, start_obj, avoid_these) {
+    let moved_pushables = [];
     pushables = accessGameState(state, "pushables");
     // TODO - check if pushables includes words?? Will this be an issue?
     push_dict = {};
+    obst_dict = {};
     push_dict = add_to_dict(pushables, push_dict);
 
     path_dict = {};
@@ -315,20 +359,35 @@ function canClearPath(state, path_locs, start_obj) {
         path_dict[path_loc.get_string()] = path_loc;
     }
 
+    //remove avoid_these from push_dict. Add to obst_dict instead
+    for (avoid_this of avoid_these) {
+        avoid_str = avoid_this.get_string();
+        obst_dict[avoid_str] = push_dict[avoid_str];
+        delete push_dict[avoid_str];
+    }
+
+    if (push_dict.length == 0) {
+        return [[], [], []];
+    }
+
     // death things
     const killers = accessGameState(state, "killers");
     const sinkers = accessGameState(state, "sinkers");
     // stoppables
     const stoppables = accessGameState(state, "stoppables");
+    // words
+    const words = accessGameState(state, "words");
 
     // obstacles
-    obst_dict = {};
-    obst_dict = add_to_dict(killers, obstacles);
-    obst_dict = add_to_dict(sinkers, obstacles);
-    obst_dict = add_to_dict(stoppables, obstacles);
+    obst_dict = add_to_dict(killers, obst_dict);
+    obst_dict = add_to_dict(sinkers, obst_dict);
+    obst_dict = add_to_dict(stoppables, obst_dict);
+    obst_dict = add_to_dict(words, obst_dict);
 
     // make a new_State for use in moving the pushables
-    new_state = deepCopy(state);
+    // temp_str = simjs.showState(state);
+    // new_state = simjs.newState(temp_str);
+    let new_state = copy_state(state);
 
     // set the last location as the start_bj location
     last_loc = new Position(start_obj.x, start_obj.y);
@@ -340,8 +399,15 @@ function canClearPath(state, path_locs, start_obj) {
     for (let i = 0; i < path_locs.length; ++i) {
         cur_str = path_locs[i].get_string();
         if (cur_str in push_dict) {
+            // first, add to moved_pushables
+            moved_pushables.push(path_locs[i]);
+
             // try to push out of the way
             pos_dirs = canPush(new_state, push_dict[cur_str], []);
+
+            if (pos_dirs.length == 0) {
+                return [[], [], []]
+            }
 
             chosen_dir = null;
             for (pos_dir of pos_dirs) {
@@ -352,33 +418,16 @@ function canClearPath(state, path_locs, start_obj) {
                 step_prev_loc = null;
                 while ((step_str in path_dict) && !(step_str in obst_dict) &&
                     game_bound_check(new_state, step_loc)) {
-                    switch (pos_dir) {
-                        case "right":
-                            step_prev_loc = step_loc;
-                            step_loc = step_loc.get_right();
-                            step_str = step_loc.get_string();
-                            break;
-                        case "up":
-                            step_loc = step_loc.get_up();
-                            step_str = step_loc.get_string();
-                            break;
-                        case "left":
-                            step_loc = step_loc.get_left();
-                            step_str = step_loc.get_string();
-                            break;
-                        case "down":
-                            step_loc = step_loc.get_dn();
-                            step_str = step_loc.get_string();
-                            break;
-                        default:
-                            console.log("While loop error in canClearPath.")
-                    }
+                    step_prev_loc = step_loc;
+                    step_loc = step_loc.get_dir(pos_dir);
+                    step_str = step_loc.get_string();
+
                 }
 
                 // check if stepping ended on a obstacle
                 if (!(step_str in obst_dict) &&
                     game_bound_check(new_state, step_loc)) {
-                    // don't move this direction
+                    continue;
                 }
                 else {
                     break;
@@ -390,17 +439,35 @@ function canClearPath(state, path_locs, start_obj) {
             // generate path to move pushable out of the way
 
             // first, go to the correct side of the pushable
-            side_of_push = path_locs[i].get_dir(chosen_dir);
+            // note that the side of the pushable is opposite the direction you want to push it
+            side_of_push = null;
+            switch (pos_dir) {
+                case "right":
+                    side_of_push = path_locs[i].get_left();
+                    break;
+                case "up":
+                    side_of_push = path_locs[i].get_dn();
+                    break;
+                case "left":
+                    side_of_push = path_locs[i].get_right();
+                    break;
+                case "down":
+                    side_of_push = path_locs[i].get_up();
+                    break;
+                default:
+                    console.log("While loop error in canClearPath.")
+            }
+
 
             //path to side of push
             start_loc = last_loc;
-            path_to_side = a_star_avoid_push(new_state, start_loc, side_of_push);
+            [path_to_side, temp_list] = a_star_avoid_push(new_state, start_loc, side_of_push);
 
             // step in direction until rock not in path. count how many times moved.
             // side_of_push is start location
             counter = 0;
-            cur_loc = deepCopyObject(side_of_push);
-            push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
+            cur_loc = side_of_push;
+            push_loc_str = cur_loc.get_dir(chosen_dir).get_dir(chosen_dir).get_string();
 
             // do checks on the pushable, then count as move
 
@@ -408,7 +475,7 @@ function canClearPath(state, path_locs, start_obj) {
                 game_bound_check(new_state, step_loc)) {
                 counter++;
                 cur_loc = cur_loc.get_dir(chosen_dir);
-                push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
+                push_loc_str = cur_loc.get_dir(chosen_dir).get_dir(chosen_dir).get_string();
             }
 
             //set end location
@@ -422,18 +489,18 @@ function canClearPath(state, path_locs, start_obj) {
 
             // now full_path is the path to move this object out of the way
             // add the full_path to the running_path
-            running_path.concat(full_path);
+            running_path = running_path.concat(full_path);
 
             // and last_loc is the location YOU end at after pushing the object out of the way
             // simulate path to get new state. Set to "new_state", for use moving the next pushable
-            for (move of path) {
+            for (move of full_path) {
                 let { next_state, won } = simjs.nextMove(move, new_state);
                 new_state = next_state;
             }
         }
     }
 
-    return running_path;
+    return [running_path, moved_pushables, last_loc];
 }
 
 /**
@@ -469,6 +536,7 @@ function canPushThese(state, pushes) {
  *
  */
 function canPush(state, target, directions) {
+    var state = copy_state(state);
     var outList = [];
     const yous = isYou(state, []);
 
@@ -488,18 +556,18 @@ function canPush(state, target, directions) {
         // get the starting location for this push
         switch (c) {
             case "up":
-                pushTarget = { x: target.x, y: target.y + 1 }; // start one below
+                pushTarget = new Position(target.x, target.y + 1); // start one below
                 break;
             case "down":
-                pushTarget = { x: target.x, y: target.y - 1 }; // start one above
+                pushTarget = new Position(target.x, target.y - 1); // start one above
                 break;
 
             case "left":
-                pushTarget = { x: target.x + 1, y: target.y }; // start one to the right
+                pushTarget = new Position(target.x + 1, target.y); // start one to the right
                 break;
 
             case "right":
-                pushTarget = { x: target.x - 1, y: target.y - 1 }; // start one to the left
+                pushTarget = new Position(target.x - 1, target.y); // start one to the left
                 break;
 
             default:
@@ -509,7 +577,8 @@ function canPush(state, target, directions) {
         // ignoring side effects, greedily see if any YOU object can push the target
 
         for (let you of yous) {
-            let reachablePath = isReachable(state, you, pushTarget, []);
+            you_pos = new Position(you.x, you.y);
+            let [reachablePath, locs] = a_star_avoid_push(state, you_pos, pushTarget);
 
             // check that the direction is reachable
             if (reachablePath.length > 0) {
