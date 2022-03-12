@@ -29,33 +29,44 @@ class Rule {
  * @param {array} rules possible values of rule to filter OR an empty array.
  * @return {array} filter out all rules that are active in the current game state.
  */
-function rule(state, rules) {
+function activeRules(state, rules) {
   const stateRules = accessGameState(state, "rule_objs");
 
-  let ruleObjects = [];
+  let active = [];
   for (let i = 0; i < stateRules.length; i += 3) {
-    ruleObjects.push(
-      new Rule(stateRules[i], stateRules[i + 1], stateRules[i + 2])
-    );
+    active.push(new Rule(stateRules[i], stateRules[i + 1], stateRules[i + 2]));
   }
 
   if (rules.length > 0) {
     rules = rules.filter((r) => {
-      ruleObjects.some((ro) => ro.equals(r));
+      active.some((ro) => ro.equals(r));
     });
   } else {
-    rules = ruleObjects;
+    rules = active;
   }
   return rules;
 }
 
+// TODO: implement canChangeRules
 /**
- * @description Filter out rules in the current game state that can be .
+ * @description Filter out rules in the current game state that can be changed.
  *              If rules is empty, all of the rules in effect in the current state.
  * @param {string} state the acsii representation of the current game state.
- * @param {array} rules possible values of rule to filter OR an empty array.
+ * @param {array} rules possible rules to filter OR an empty array.
  * @return {array} filter out all rules that are active in the current game state.
  */
-function canChangeRule(state, rules) {}
+function canChangeRules(state, rules) {
+  // TODO: are all 3 words static?
+  return [];
 
-module.exports = { rule };
+  // TODO: canActivateRules(state, rules) : can activate a rule if it isn't already?
+  //        is there a 1x3 location to build the rule?
+  //          for each candidate location:
+  //          TODO: canPushTo(state, target, location, path) : can a target be pushed to a location?
+
+  // TODO: canDeactivateRules(state, rules) : can deactivate an already active rule?
+  //   TODO: ruleDirection(state, rule) : get the direction of an existing rule
+  //           canPushThese words in a direction perpendicular to the rule?
+}
+
+module.exports = { activeRules };

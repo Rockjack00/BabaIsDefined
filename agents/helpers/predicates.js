@@ -242,7 +242,6 @@ function canPushThese(state, pushes) {
 
   // only check the queries that are actually pushable
   isPush(state, pushes).forEach((p) => {
-    // add a "pushableDirs" attribute to the pushable object (or clear it if it exists)
     let pushableDirs = canPush(state, p, []);
     if (pushableDirs.length > 0) {
       outList.push({ obj: p, pushableDirs: pushableDirs });
