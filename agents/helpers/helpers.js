@@ -61,8 +61,6 @@ class Position {
 
 // Returns a list of phys_obj based on the corresponding element
 function accessGameState(state, element) {
-  //   const currState = {};
-  //   newState(currState, ascii_map);
   game_elements = state[element];
   return game_elements;
 }
@@ -197,14 +195,5 @@ function target_neighbors(state, target) {
 
   return neighbors;
 }
-
-// Return true if a coordinate is reachable given the current state
-// function reachable(pathing_type, x_obj, y_obj, state, path) {
-//   if (pathing_type == "floodfill") {
-//     return pathing.floodfill_reachable(x_obj, y_obj, state, path);
-//   } else {
-//     console.log("ERROR: unknown pathing type" + pathing_type);
-//   }
-// }
 
 module.exports = { accessGameState, deepCopy, deepCopyObject, add_to_dict, Position, permutations_of_list, static };

@@ -641,6 +641,53 @@ function canPush(state, target, directions) {
     return outList;
 }
 
+/**
+ * @description Filter by words and/or rules from all of the rules that can be generated from the current game state.
+ *              If words and rules are empty, all possible rules are returned (cartesian product).
+ * @param {State} state the current game state.
+ * @param {array} words possible words to filter OR an empty array.
+ * @param {array} rules possible rules to filter OR an empty array.
+ * @return {array} filtered rules - or all possible in triple of format {noun: n, is: i, property: p}.
+ *
+ */
+function generateRules(state, words, rules) {
+    // Generate all possible rules
+    if (words.length == 0 && rules.length == 0) {
+        const nouns = 
+
+    }
+
+    // 2. evaluate rules -> [],[],[rules]
+
+    // 3. generate filtered subset -> [noun],[],[]
+
+    // maybe?
+    // 4. evaluate a filtered subset -> [noun],[],[rules]
+
+    // 5. evaluate a filtered set -> [nouns], [properties], []
+}
+
+/**
+ * @description Filter all of the objects that are NOUN in the current game state.
+ *              If nouns is empty, all of the objects that are NOUN in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} nouns possible values of NOUN to filter OR an empty array.
+ * @return {array} all objects in nouns that are NOUN - or all of them - in the current game state.
+ * 
+ */
+function isNoun(state, nouns) {
+    const word_objs = accessGameState(state, "rule_phys");
+    const noun_words = ["baba", "bone", "flag", "wall", "grass", "lava", "rock", "floor", "keke", "goop", "love"]
+    word_objs.filter((w) => noun_words.includes(w.name))
+
+    if (nouns.length > 0) {
+        nouns = nouns.filter((n) => word_objs.includes(n));
+    } else {
+        nouns = word_objs;
+    }
+    return nouns;
+}
+
 module.exports = {
     isYou,
     isWin,
