@@ -166,13 +166,36 @@ function static(state, target) {
     return true;
   }
 
-  let neighbors = neighbors(state, target); // TODO: implement neighbors()
+  let neighbors = target_neighbors(state, target); // TODO: implement neighbors()
 
   return (
     ((static(neighbors.up) || static(neighbors.down)) &&
       static(neighbors.left)) ||
     static(neighbors.right)
   );
+}
+
+// gets phys_objs that are neighbors of the target
+function target_neighbors(state, target) {
+  // make dictionary of all phys_objs and words in state. 
+  board_objs = {};
+  board_objs = add_to_dict(state["phys"], board_objs);
+  board_objs = add_to_dict(state["words"], board_objs);
+
+  //make target a Postition, then get up, down, left, and right neighbors as objs
+  neighbors = [];
+  target_pos = new Position(target.x, target.y);
+  dirs = ["right", "left", "up", "down"];
+
+  for (direction of dirs) {
+    temp_pos = target_pos.get_dir(direction);
+    obj_here = board_objs[temp_pos.get_string()];
+    if (obj_here != null) {
+      neighbors.push(obj_here);
+    }
+  }
+
+  return neighbors;
 }
 
 // Return true if a coordinate is reachable given the current state
