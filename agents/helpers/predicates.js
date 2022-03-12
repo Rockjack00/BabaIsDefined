@@ -1,5 +1,5 @@
 const { nextMove } = require("../../js/simulation");
-const { accessGameState } = require("./helpers");
+const { accessGameState, static } = require("./helpers");
 const { floodfill_reachable, a_star_reachable } = require("./pathing");
 
 const simjs = require("../../js/simulation");
@@ -40,14 +40,14 @@ const simjs = require("../../js/simulation");
  * @return {array} all objects in yous that are YOU - or all of them - in the current game state.
  */
 function isYou(state, yous) {
-    const players = accessGameState(state, "players");
+  const players = accessGameState(state, "players");
 
-    if (yous.length > 0) {
-        yous = yous.filter((y) => players.includes(y));
-    } else {
-        yous = players;
-    }
-    return yous;
+  if (yous.length > 0) {
+    yous = yous.filter((y) => players.includes(y));
+  } else {
+    yous = players;
+  }
+  return yous;
 }
 
 /**
@@ -58,14 +58,14 @@ function isYou(state, yous) {
  * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
  */
 function isWin(state, wins) {
-    const winnables = accessGameState(state, "winnables");
+  const winnables = accessGameState(state, "winnables");
 
-    if (wins.length > 0) {
-        wins = wins.filter((w) => winnables.includes(w));
-    } else {
-        wins = winnables;
-    }
-    return wins;
+  if (wins.length > 0) {
+    wins = wins.filter((w) => winnables.includes(w));
+  } else {
+    wins = winnables;
+  }
+  return wins;
 }
 
 /**
@@ -76,20 +76,20 @@ function isWin(state, wins) {
  * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
  */
 function isReachable(state, start, target, path) {
-    if (path.length > 0) {
-        // step through the path. Check if gets to the target
-        var win = false;
-        var nextState = state;
-        for (let step of path) {
-            [nextState, win] = simjs.nextMove(step, nextState);
-            if (win) {
-                return path;
-            }
-        }
-        return [];
-    } else {
-        return a_star_reachable(state, start, target);
+  if (path.length > 0) {
+    // step through the path. Check if gets to the target
+    var win = false;
+    var nextState = state;
+    for (let step of path) {
+      [nextState, win] = simjs.nextMove(step, nextState);
+      if (win) {
+        return path;
+      }
     }
+    return [];
+  } else {
+    return a_star_reachable(state, start, target);
+  }
 }
 
 /**
@@ -100,17 +100,16 @@ function isReachable(state, start, target, path) {
  * @return {array} all objects in movers that are MOVE - or all of them - in the current game state.
  */
 function isMove(state, movers) {
-    const auto_movers = accessGameState(state, "auto_movers");
+  const auto_movers = accessGameState(state, "auto_movers");
 
-    if (movers.length > 0) {
-        movers = movers.filter((s) => auto_movers.includes(s));
-    } else {
-        movers = auto_movers;
-    }
-    return movers;
+  if (movers.length > 0) {
+    movers = movers.filter((s) => auto_movers.includes(s));
+  } else {
+    movers = auto_movers;
+  }
+  return movers;
 }
 
-// TODO: add words as pushables
 /**
  * @description Filter all of the objects that are PUSH in the current game state.
  *              If pushes is empty, all of the objects that are PUSH in the current state.
@@ -119,14 +118,15 @@ function isMove(state, movers) {
  * @return {array} all objects in pushes that are PUSH - or all of them - in the current game state.
  */
 function isPush(state, pushes) {
-    const pushables = accessGameState(state, "pushables");
+  const pushables = accessGameState(state, "pushables");
+  pushables.concat(accessGameState(state, "words"));
 
-    if (pushes.length > 0) {
-        pushes = pushes.filter((p) => pushables.includes(p));
-    } else {
-        pushes = pushables;
-    }
-    return pushes;
+  if (pushes.length > 0) {
+    pushes = pushes.filter((p) => pushables.includes(p));
+  } else {
+    pushes = pushables;
+  }
+  return pushes;
 }
 
 /**
@@ -137,16 +137,15 @@ function isPush(state, pushes) {
  * @return {array} all objects in stops that are STOP - or all of them - in the current game state.
  */
 function isStop(state, stops) {
-    const stoppables = accessGameState(state, "stoppables");
+  const stoppables = accessGameState(state, "stoppables");
 
-    if (stops.length > 0) {
-        stops = stops.filter((s) => stoppables.includes(s));
-    } else {
-        stops = stoppables;
-    }
-    return stops;
+  if (stops.length > 0) {
+    stops = stops.filter((s) => stoppables.includes(s));
+  } else {
+    stops = stoppables;
+  }
+  return stops;
 }
-
 
 /**
  * @description Filter all of the objects that are KILL in the current game state.
@@ -156,14 +155,14 @@ function isStop(state, stops) {
  * @return {array} all objects in kills that are KILL - or all of them - in the current game state.
  */
 function isKill(state, kills) {
-    const killers = accessGameState(state, "killers");
+  const killers = accessGameState(state, "killers");
 
-    if (kills.length > 0) {
-        kills = kills.filter((s) => killers.includes(s));
-    } else {
-        kills = killers;
-    }
-    return kills;
+  if (kills.length > 0) {
+    kills = kills.filter((s) => killers.includes(s));
+  } else {
+    kills = killers;
+  }
+  return kills;
 }
 
 /**
@@ -174,14 +173,14 @@ function isKill(state, kills) {
  * @return {array} all objects in sinks that are SINK - or all of them - in the current game state.
  */
 function isSink(state, sinks) {
-    const sinkers = accessGameState(state, "sinkers");
+  const sinkers = accessGameState(state, "sinkers");
 
-    if (sinks.length > 0) {
-        sinks = sinks.filter((s) => sinkers.includes(s));
-    } else {
-        sinks = sinkers;
-    }
-    return sinks;
+  if (sinks.length > 0) {
+    sinks = sinks.filter((s) => sinkers.includes(s));
+  } else {
+    sinks = sinkers;
+  }
+  return sinks;
 }
 
 /**
@@ -192,20 +191,19 @@ function isSink(state, sinks) {
  * @return {array} all objects in hot_objs that are HOT - or all of them - in the current game state.
  */
 function isHot(state, hot_objs) {
-    const featured = accessGameState(state, "featured");
+  const featured = accessGameState(state, "featured");
 
-    // if there are no hot objects, return empty list
-    if (!("hot" in featured))
-        return [];
+  // if there are no hot objects, return empty list
+  if (!("hot" in featured)) return [];
 
-    const is_hot_objs = featured["hot"];
+  const is_hot_objs = featured["hot"];
 
-    if (hot_objs.length > 0) {
-        hot_objs = hot_objs.filter((s) => is_hot_objs.includes(s));
-    } else {
-        hot_objs = is_hot_objs;
-    }
-    return hot_objs;
+  if (hot_objs.length > 0) {
+    hot_objs = hot_objs.filter((s) => is_hot_objs.includes(s));
+  } else {
+    hot_objs = is_hot_objs;
+  }
+  return hot_objs;
 }
 
 /**
@@ -216,38 +214,19 @@ function isHot(state, hot_objs) {
  * @return {array} all objects in melts that are MELT - or all of them - in the current game state.
  */
 function isMelt(state, melts) {
-    const featured = accessGameState(state, "featured");
+  const featured = accessGameState(state, "featured");
 
-    // if there are no melt objects, return empty list
-    if (!("melt" in featured))
-        return [];
+  // if there are no melt objects, return empty list
+  if (!("melt" in featured)) return [];
 
-    const is_melts = featured["melt"];
+  const is_melts = featured["melt"];
 
-    if (melts.length > 0) {
-        melts = melts.filter((s) => is_melts.includes(s));
-    } else {
-        melts = is_melts;
-    }
-    return melts;
-}
-
-/**
- * @description Get all the rules in the current game state.
- *              If rules is empty, all of the objects that are RULE in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} rules possible values of rule to filter OR an empty array.
- * @return {array} filter out all rules that are active in the current game state.
- */
-function rule(state, rules) {
-    const state_rules = accessGameState(state, "rules");
-
-    if (rules.length > 0) {
-        rules = rules.filter((r) => state_rules.includes(r));
-    } else {
-        rules = state_rules;
-    }
-    return rules;
+  if (melts.length > 0) {
+    melts = melts.filter((s) => is_melts.includes(s));
+  } else {
+    melts = is_melts;
+  }
+  return melts;
 }
 
 /**
@@ -259,18 +238,18 @@ function rule(state, rules) {
  *
  */
 function canPushThese(state, pushes) {
-    var outList = [];
+  var outList = [];
 
-    // only check the queries that are actually pushable
-    isPush(state, pushes).forEach((p) => {
-        // add a "pushableDirs" attribute to the pushable object (or clear it if it exists)
-        let pushableDirs = canPush(state, p, []);
-        if (pushableDirs.length > 0) {
-            outList.push({ obj: p, pushableDirs: pushableDirs });
-        }
-    });
+  // only check the queries that are actually pushable
+  isPush(state, pushes).forEach((p) => {
+    // add a "pushableDirs" attribute to the pushable object (or clear it if it exists)
+    let pushableDirs = canPush(state, p, []);
+    if (pushableDirs.length > 0) {
+      outList.push({ obj: p, pushableDirs: pushableDirs });
+    }
+  });
 
-    return outList;
+  return outList;
 }
 
 /**
@@ -283,90 +262,91 @@ function canPushThese(state, pushes) {
  *
  */
 function canPush(state, target, directions) {
-    var outList = [];
-    const yous = isYou(state, []);
+  var outList = [];
+  const yous = isYou(state, []);
 
-    if (isPush(state, target).length < 1) {
-        // target isn't pushable
-        return [];
+  if (isPush(state, target).length < 1) {
+    // target isn't pushable
+    return [];
+  }
+
+  if (static(state, target)) {
+    // target is inacessable
+    return [];
+  }
+
+  // check all directions if unspecified
+  if (directions.length < 1) {
+    directions = ["up", "down", "right", "left"];
+  }
+
+  for (let c of directions) {
+    let pushTarget;
+
+    // get the starting location for this push
+    switch (c) {
+      case "up":
+        pushTarget = { x: target.x, y: target.y + 1 }; // start one below
+        break;
+      case "down":
+        pushTarget = { x: target.x, y: target.y - 1 }; // start one above
+        break;
+
+      case "left":
+        pushTarget = { x: target.x + 1, y: target.y }; // start one to the right
+        break;
+
+      case "right":
+        pushTarget = { x: target.x - 1, y: target.y - 1 }; // start one to the left
+        break;
+
+      default:
+        console.error(`Cannot read direction "${c}"`);
     }
 
-    // check all directions if unspecified
-    if (directions.length < 1) {
-        directions = ["up", "down", "right", "left"];
-    }
+    // ignoring side effects, greedily see if any YOU object can push the target
 
-    for (let c of directions) {
-        let pushTarget;
+    for (let you of yous) {
+      let reachablePath = isReachable(state, you, pushTarget, []);
 
-        // get the starting location for this push
-        switch (c) {
-            case "up":
-                pushTarget = { x: target.x, y: target.y + 1 }; // start one below
-                break;
-            case "down":
-                pushTarget = { x: target.x, y: target.y - 1 }; // start one above
-                break;
+      // check that the direction is reachable
+      if (reachablePath.length > 0) {
+        // see if it moves in the game state at that direction
+        // TODO: change this to simjs.newState() - its probably a lot faster
+        let pushState = reachablePath.reduce(function (currState, step) {
+          return simjs.nextMove(step, currState)["next_state"];
+        }, state);
 
-            case "left":
-                pushTarget = { x: target.x + 1, y: target.y }; // start one to the right
-                break;
+        // did the state change?
+        // TODO: we may need to do this a different way when levels become more complex
+        //       maybe could check if a "you" object made it into the target location or something
 
-            case "right":
-                pushTarget = { x: target.x - 1, y: target.y - 1 }; // start one to the left
-                break;
-
-            default:
-                console.error(`Cannot read direction "${c}"`);
+        if (
+          simjs.showState(pushState) !==
+          simjs.showState(simjs.nextMove(c, pushState)["next_state"])
+        ) {
+          outList.push(c);
+          break;
         }
-
-        // ignoring side effects, greedily see if any YOU object can push the target
-
-        for (let you of yous) {
-            let reachablePath = isReachable(state, you, pushTarget, []);
-
-            // check that the direction is reachable
-            if (reachablePath.length > 0) {
-                // see if it moves in the game state at that direction
-                // TODO: change this to simjs.newState() - its probably a lot faster
-                let pushState = reachablePath.reduce(function (
-                    currState,
-                    step
-                ) {
-                    return simjs.nextMove(step, currState)["next_state"];
-                },
-                state);
-
-                // did the state change?
-                // TODO: we may need to do this a different way when levels become more complex
-                //       maybe could check if a "you" object made it into the target location or something
-
-                if (
-                    simjs.showState(pushState) !==
-                    simjs.showState(simjs.nextMove(c, pushState)["next_state"])
-                ) {
-                    outList.push(c);
-                    break;
-                }
-            }
-        }
+      }
     }
+  }
 
-    return outList;
+  return outList;
 }
 
 module.exports = {
-    isYou,
-    isWin,
-    isReachable,
-    isMove,
-    isPush,
-    isStop,
-    isKill,
-    isSink,
-    isHot,
-    isMelt,
-    rule,
-    canPush,
-    canPushThese,
+  isYou,
+  isWin,
+  isReachable,
+  isMove,
+  isPush,
+  isStop,
+  isKill,
+  isSink,
+  isHot,
+  isMelt,
+  rule,
+  canPush,
+  canPushThese,
 };
