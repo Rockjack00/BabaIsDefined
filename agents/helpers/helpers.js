@@ -210,4 +210,44 @@ function neighbors(state, target) {
   return outList;
 }
 
-module.exports = { accessGameState, deepCopy, deepCopyObject, copy_state, add_to_dict, Position, permutations_of_list, static };
+/**
+ * @description Simulate the path based on the current path and return the simulated state
+ * @param {State} state the starting state
+ * @param {Array} path the list of steps to step the simulation through
+ * @returns 
+ */
+
+function simulate(state, path) {
+  // TODO: change this to simjs.newState() - its probably a lot faster
+  //    maybe give the option to actually simulate (in case there could be side effects?)
+  return reachablePath.reduce(function (
+    currState,
+    step
+  ) {
+    return simjs.nextMove(step, currState)["next_state"];
+  },
+    state);
+}
+
+/**
+ * @description check if an object is at the specified location
+ * @param {object} object 
+ * @param {Position} position 
+ * @returns 
+ */
+function atLocation(object, position) {
+  return object.x == position.x && object.y == position.y
+}
+
+module.exports = {
+  accessGameState,
+  deepCopy,
+  deepCopyObject,
+  copy_state,
+  add_to_dict,
+  Position,
+  permutations_of_list,
+  static,
+  simulate,
+  atLocation
+};
