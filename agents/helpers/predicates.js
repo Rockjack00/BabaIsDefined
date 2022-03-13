@@ -642,32 +642,6 @@ function canPush(state, target, directions) {
 }
 
 /**
- * @description Filter by words and/or rules from all of the rules that can be generated from the current game state.
- *              If words and rules are empty, all possible rules are returned (cartesian product).
- * @param {State} state the current game state.
- * @param {array} words possible words to filter OR an empty array.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filtered rules - or all possible in triple of format {noun: n, is: i, property: p}.
- *
- */
-function generateRules(state, words, rules) {
-    // Generate all possible rules
-    if (words.length == 0 && rules.length == 0) {
-        const nouns = 
-
-    }
-
-    // 2. evaluate rules -> [],[],[rules]
-
-    // 3. generate filtered subset -> [noun],[],[]
-
-    // maybe?
-    // 4. evaluate a filtered subset -> [noun],[],[rules]
-
-    // 5. evaluate a filtered set -> [nouns], [properties], []
-}
-
-/**
  * @description Filter all of the objects that are NOUN in the current game state.
  *              If nouns is empty, all of the objects that are NOUN in the current state.
  * @param {string} state the acsii representation of the current game state.

@@ -1,4 +1,5 @@
-const { isYou, isWin, isReachable, rule } = require("./predicates");
+//const { isYou, isWin, isReachable, rule } = require("./predicates");
+const { isYou, isWin, isReachable } = require("./predicates");
 const simjs = require("../../js/simulation");
 
 // Optionally do eager evaluation (depth first)
@@ -13,7 +14,7 @@ const EAGER = false;
 function solve_level(state) {
   var yous = isYou(state, []);
 
-  console.log(rule(state, []));
+  //console.log(rule(state, []));
 
   /**
    * Are any objects that are YOU also WIN?
@@ -45,8 +46,7 @@ function solve_level(state) {
 
       if (p.length > 0) {
         console.log(
-          `\t{ ${y.name} } can reach { ${
-            w.name
+          `\t{ ${y.name} } can reach { ${w.name
           } } by taking the path { ${simjs.miniSol(p)} }.`
         );
         if (EAGER) {
