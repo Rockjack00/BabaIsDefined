@@ -1,4 +1,5 @@
 
+const { check } = require("prettier");
 const { accessGameState, add_to_dict, Position } = require("./helpers");
 
 // for Reference, this are the position actions
@@ -272,7 +273,12 @@ function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these)
   start_pos = new Position(start_obj.x, start_obj.y);
   end_pos = new Position(end_obj.x, end_obj.y);
 
-  return a_star(start_pos, end_pos, state, push_are_obst, avoid_these);
+  return a_star(start_pos, end_pos, state, push_are_obst, avoid_these, false);
+}
+
+function a_star_pushing(state, start_pos, end_pos) {
+  return a_star(start_pos, end_pos, state, true, [], true);
+
 }
 
 function a_star_avoid_push(state, start_pos, end_pos) {
@@ -284,7 +290,7 @@ function a_star_avoid_push(state, start_pos, end_pos) {
   return a_star(start_pos, end_pos, state, true, []);
 }
 
-function a_star(start_pos, end_pos, state, push_are_obst, avoid_these) {
+function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
   // only runs for actual moves. Ignores "space" which is "wait"
   range = 4;
 
@@ -333,24 +339,63 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these) {
   x_bounds = state["obj_map"][0].length;
   y_bounds = state["obj_map"].length;
 
-  path_end_node = a_star_solver(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
-  if (path_end_node == null) {
-    path_moves = null;
-    path_locations = null;
+  if (pushing) {
+    path_end_node = a_star_pushed_solver(start_pos, end_pos, obstacles)
   }
   else {
-    path_moves = get_moves(path_end_node);
-    path_locations = get_move_positions(path_end_node);
+    path_end_node = a_star_solver(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
+  }
+
+  if (path_end_node == null) {
+    path_moves = [];
+    path_locations = [];
+  }
+  else {
+    path_moves = get_moves(path_end_node, pushing);
+    if (!pushing) {
+      path_locations = get_move_positions(path_end_node);
+    }
+    else {
+      path_locations = [];
+    }
   }
   return [path_moves, path_locations];
 }
 
-function get_moves(node) {
+function get_moves(node, pushing) {
   if (node.parent == null) {
     return [];
   }
 
   var moves = get_moves(node.parent);
+
+  // if pushing an object
+  if ((pushing) && (moves.length != 0)) {
+    next_move = node.move;
+    prev_move = moves[moves.length - 1];
+    if (prev_move != next_move) {
+      // move opposite of next_move
+      switch (next_move) {
+        case "right":
+          moves.push("left");
+          break;
+        case "left":
+          moves.push("right");
+          break;
+        case "up":
+          moves.push("down");
+          break;
+        case "down":
+          moves.push("up");
+          break;
+      }
+
+      // move same as prev_move
+      moves.push(prev_move);
+    }
+  }
+  // end of if
+
   moves.push(node.move);
 
   return moves;
@@ -523,7 +568,172 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
 }
 
 
+function push_turn_check(obstacles, next_node) {
+  cur_node = next_node.parent
+  // can push at beginning is done before getting here
+  if (cur_node == null) {
+    return true;
+  }
+
+  next_pos = next_node.get_pos();
+  cur_pos = cur_node.get_pos();
+
+  check_these = []; // will become a list of two spaces
 
 
 
-module.exports = { floodfill_reachable, a_star_reachable, Position, add_to_dict, game_bound_check, a_star_avoid_push };
+  switch (cur_node.move + next_node.move) {
+    case "right" + "down":
+    case "left" + "down": // spaces above (opposite the following move)
+      check_these = [cur_pos.get_up(), next_pos.get_up()];
+      break;
+    case "right" + "up":
+    case "left" + "up": // spaces below (opposite the following move)
+      check_these = [cur_pos.get_dn(), next_pos.get_dn()];
+      break;
+    case "up" + "left":
+    case "down" + "left": // spaces below (opposite the following move)
+      check_these = [cur_pos.get_right(), next_pos.get_right()];
+      break;
+    case "up" + "right":
+    case "down" + "right": // spaces below (opposite the following move)
+      check_these = [cur_pos.get_left(), next_pos.get_left()];
+      break;
+  }
+
+  for (pos of check_these) {
+    if (pos.get_string() in obstacles) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
+// this A* is for objects being pushed by YOU. 
+// The key is to make sure that if you turn, YOU can get to the opposite side to push from.
+function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
+  // A* Search Algorithm
+  // 1.  Initialize the open list
+  open_list = [];
+  // 2.  Initialize the closed list
+  //     put the starting node on the open 
+  //     list (you can leave its f at zero)
+  closed_list = [];
+  // TODO check that this is adding to list correctly? Javascript can be weird
+  start_node = new Node(cur_location, 0, null, first_move);
+  open_list.push(start_node);
+
+  // 3.  while the open list is not empty
+  while (open_list.length > 0) {
+    // a) find the node with the least f on 
+    //    the open list, call it "q"
+    prev_f = open_list[0].get_f();
+    q_index = 0;
+    for (let i = 1; i < open_list.length; ++i) {
+      cur_f = open_list[i].get_f();
+      if (cur_f < prev_f) {
+        q_index = i;
+      }
+    }
+
+    // b) pop q off the open list
+    // TODO check this is actually popping
+    q = open_list[q_index]; // get node
+    open_list.splice(q_index, 1); // remove node from list
+
+    // c) generate q's 4 successors and set their 
+    //    parents to q
+    // TODO: put in loop
+
+    // for refence: const possActions = ["space", "right", "up", "left", "down"];
+
+    successors = [];
+    actions = ["right", "up", "left", "down"]
+
+    for (act of actions) {
+      next_node = new Node(q.get_pos().get_dir(act), null, q, act);
+      next_space = next_node.get_pos();
+      next_str = next_node.get_pos().get_string();
+      if (!(next_str in obstacles) &&
+        game_bound_check(state, next_space) && push_turn_check(next_node)) {
+        successors.push(next_node);
+      }
+    }
+
+
+
+    // d) for each successor
+    for (let i = 0; i < successors.length; ++i) {
+      succ_node = successors[i];
+      //     i) if successor is the goal, stop search
+      if (succ_node.get_pos().get_string() == end_pos.get_string()) {
+        return succ_node; // and then step through the node backwards to make the path
+      }
+
+      //     ii) else, compute both g and h for successor
+      //       successor.g = q.g + distance between 
+      //                           successor and q
+      succ_node.g = q.g + 1;
+      //       successor.h = distance from goal to 
+      //       successor (This can be done using many 
+      //       ways, we will discuss three heuristics- 
+      //       Manhattan, Diagonal and Euclidean 
+      //       Heuristics)
+      succ_node.h = get_manhattan(succ_node.get_pos(), end_pos);
+      //       successor.f = successor.g + successor.h
+      succ_node.f = succ_node.g + succ_node.h;
+
+      //     iii) if a node with the same position as 
+      //         successor is in the OPEN list which has a 
+      //        lower f than successor, skip this successor
+      skip_s = false;
+      for (let i = 0; i < open_list.length; ++i) {
+        list_node = open_list[i];
+        if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
+          (list_node.get_f() < succ_node.get_f())) {
+          skip_s = true;
+          break;
+        }
+      }
+      if (skip_s) {
+        continue;
+      }
+
+      //     iV) if a node with the same position as 
+      //         successor  is in the CLOSED list which has
+      //         a lower f than successor, skip this successor
+
+      for (let i = 0; i < closed_list.length; ++i) {
+        list_node = closed_list[i];
+        if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
+          (list_node.get_f() < succ_node.get_f())) {
+          skip_s = true;
+          break;
+        }
+      }
+      //         otherwise, add  the node to the open list
+      if (!skip_s) {
+        open_list.push(succ_node);
+      }
+
+
+      //  end (for loop)
+    }
+
+
+    // e) push q on the closed list
+    closed_list.push(q);
+
+
+
+    // end (while loop)
+  }
+  return start_node;
+}
+
+
+
+
+module.exports = { floodfill_reachable, a_star_reachable, Position, add_to_dict, game_bound_check, a_star_avoid_push, a_star_pushing };

@@ -1,6 +1,6 @@
 const { nextMove } = require("../../js/simulation");
 const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static, simulate } = require("./helpers");
-const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push } = require("./pathing");
+const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push, a_star_pushing } = require("./pathing");
 
 const simjs = require("../../js/simulation");
 
@@ -637,13 +637,62 @@ function canPush(state, target, directions) {
  *              If path is not empty, just see if it works.
  * @param {*} state the current game state
  * @param {*} target the object to be pushed
- * @param {*} location the location the object needs to end up in
+ * @param {*} end_location the location the object needs to end up in
  * @param {*} path a path to get there.
  * @returns A path that succeeds, or the empty list if none are found.
  */
-function canPushTo(state, target, location, path) {
+function canPushTo(state, target, end_location, path) {
 
-    /*
+    // first, do canPush to get initial pushable directions. 
+    p_dirs = canPush(state, target, []);
+
+    target_loc = new Position(target.x, target.y);
+
+    // ignore side-effects, for each YOU, try the following
+    yous = isYou(state, []);
+    for (you of yous) {
+        you_pos = new Position(you.x, you.y);
+
+        // for each direction, try a path. Always include the first move here, then the path follows. 
+        for (push_dir in p_dirs) {
+            // first path to the start. Always opposite of move direction
+            start_loc = null;
+            switch (push_dir) {
+                case "left":
+                    start_loc = target_loc.get_right();
+                    break;
+                case "right":
+                    start_loc = target_loc.get_left();
+                    break;
+                case "up":
+                    start_loc = target_loc.get_dn();
+                    break;
+                case "down":
+                    start_loc = target_loc.get_up();
+                    break;
+            }
+            path_to_side = a_star_avoid_push(state, you_pos, start_loc);
+
+            // if that fails, continue loop
+            if (path_to_side.length == 0) {
+                continue;
+            }
+            // path to the end. 
+            path_pushing = a_star_pushing(state, target_loc, end_location);
+            // if it fails, try the next push direction available
+            if (path_pushing.length == 0) {
+                continue;
+            }
+            // if that succeeds, then you have a path. combine path_to_side, the first move, and path_pushing
+            running_path = path_to_side.concat([push_dir], path_pushing);
+            // return this path
+            return running_path;
+        }
+    }
+    // exit for loop and return [] since no path found
+    return []
+
+    /* I did not use this at all. But the above should work. Leaving this here until the above is tested. 
     if (path.length > 0) {
         // simulate the path and see if it ends up in the right spot
     }
@@ -678,8 +727,6 @@ function canPushTo(state, target, location, path) {
                 // else don't recurse
 
     */
-
-    return [];
 }
 
 
@@ -759,4 +806,5 @@ module.exports = {
     isMelt,
     canPush,
     canPushThese,
+    canPushTo
 };
