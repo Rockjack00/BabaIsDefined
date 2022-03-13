@@ -1,6 +1,7 @@
+const { path } = require("express/lib/application");
 const util = require("util");
 const { accessGameState } = require("./helpers");
-const { isNoun, isConnector, isProperty } = require("./predicates");
+const { isNoun, isConnector, isProperty, canPushThese } = require("./predicates");
 
 /**
  * A class to pass around rules where the rule takes the form NOUN IS PROPERTY
@@ -95,17 +96,16 @@ function activeRules(state, rules) {
  * @return {array} filter out all rules that can be changed in the current game state.
  */
 function canChangeRules(state, rules) {
-  // TODO: are all 3 words static?
-  return [];
+  // TODO: to save some time first check if all 3 words are static (since that happens a lot)
 
   // TODO: canActivateRules(state, rules) : can activate a rule if it isn't already?
   //        is there a 1x3 location to build the rule?
   //          for each candidate location:
   //          TODO: canPushTo(state, target, location, path) : can a target be pushed to a location?
 
-  // TODO: canDeactivateRules(state, rules) : can deactivate an already active rule?
-  //   TODO: ruleDirection(state, rule) : get the direction of an existing rule
-  //           canPushThese words in a direction perpendicular to the rule?
+  // canDeactivateRules(state, rules) : can deactivate an already active rule?
+
+  return [];
 }
 
 // TODO:
@@ -120,7 +120,6 @@ function canActivateRules(state, rules) {
   return;
 }
 
-// TODO:
 /**
  * @description Filter out rules in the current game state that can be deactivated.
  *              If rules is empty, filter from all of the active rules.
@@ -129,19 +128,61 @@ function canActivateRules(state, rules) {
  * @return {array} filter out all rules that in the current game state that can be deactivated.
  */
 function canDeactivateRules(state, rules) {
-  return;
+  let outList = []
+
+  // get all the rules if they are active
+  if (rules.length == 0) {
+    rules = activeRules(state, [])
+  }
+
+  // for each rule, find a path that deactivates it (if they exist)
+  rules.forEach((rule) => {
+    if (path.length > 0) {
+      outList.push({ "rule": rule, "path": canDeactivateRule(state, rule) })
+    };
+  })
+
+  return outList;
 }
 
-// TODO: 
+/**
+ * @description If a rule can be deactivated, return a path to do so
+ * @param {state} state the current game state.
+ * @param {array} rules possible rules to filter OR an empty array.
+ * @return {array} the first path found that deactivates this rule or an empty path if none are found.
+ */
+function canDeactivateRule(state, rule) {
+
+  // get the rule direction
+  let direction = ruleDirection(rule);
+  for (let pushableWord of rule.values()) {
+
+    // find all the paths that could push this word perpendicular to the rule
+    let possibleDirs = []
+    if (direction == "down") {
+      possibleDirs = canPush(state, pushableWord, ["left", "right"]);
+    } else {
+      possibleDirs = canPush(state, pushableWord, ["up", "down"]);
+
+    }
+
+    // just return the first path for any word
+    if (possibleDirs.length > 0) {
+      return possibleDirs[0].path;
+    }
+  }
+
+  return [];
+}
+
 /**
  * @description Get the direction of an existing rule.
- * @param {*} state the current game state
- * @param {*} rule an active rule
- * @returns 
+ * @param {Rule} rule an active rule
+ * @returns {string} "down"|"right" if the rule reads top-to-bottom|left-to-right
  */
 
-function ruleDirection(state, rule) {
-  return;
+function ruleDirection(rule) {
+  return rule.noun.x < rule.connector.x ? "left" : "down";
 }
 
 
