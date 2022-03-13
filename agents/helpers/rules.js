@@ -25,21 +25,57 @@ class Rule {
 }
 
 /**
- * @description Filter by words and/or rules from all of the rules that can be generated from the current game state.
- *              If words and rules are empty, all possible rules are returned (cartesian product).
+ * @description Generate property and noun rules based on the current state and given words and rules lists. 
+ *              Return the concatenation of property rules and noun rules.
+ * @param {State} state the current game state.
+ * @param {array} words possible words to filter OR an empty array.
+ * @param {array} rules possible rules to filter OR an empty array.
+ * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, property: p} or format {noun: n, connector: c, noun: n}.
+ *
+ */
+function generateRules(state, words, rules) {
+    let property_rules = generatePropertyRules(state, words, rules);
+    let noun_rules = generateNounRules(state, words, rules);
+    return property_rules.concat(noun_rules);
+}
+
+/**
+ * @description Filter by words and/or rules from all of the property rules that can be generated from the current game state.
+ *              If words and rules are empty, all possible property rules are returned (cartesian product).
  * @param {State} state the current game state.
  * @param {array} words possible words to filter OR an empty array.
  * @param {array} rules possible rules to filter OR an empty array.
  * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, property: p}.
  *
  */
-function generateRules(state, words, rules) {
-  if (words.length == 0 && rules.length == 0) { // Generate all possible rules
-    return getRules(isNoun(state), isConnector(state), isProperty(state))
-  } else if (words.length > 0 && rules.length == 0) { // Only generate rules that can be made from words
-    return getRules(isNoun(state, words), isConnector(state, words), isProperty(state, words))
-  } else if (words.length == 0 && rules.length > 0) { // Filter rules that can be made from the current state
-    const all_rules = getRules(isNoun(state), isConnector(state), isProperty(state))
+function generatePropertyRules(state, words, rules) {
+    if (words.length == 0 && rules.length == 0) { // Generate all possible property rules
+        return getRules(isNoun(state), isConnector(state), isProperty(state))
+    } else if (words.length > 0 && rules.length == 0) { // Only generate property rules that can be made from words
+        return getRules(isNoun(state, words), isConnector(state, words), isProperty(state, words))
+    } else if (words.length == 0 && rules.length > 0) { // Filter property rules that can be made from the current state
+        const all_rules = getRules(isNoun(state), isConnector(state), isProperty(state))
+        return rules.filter((r) => all_rules.includes(r))
+    }
+    return rules
+}
+
+/**
+ * @description Filter by words and/or rules from all of the noun rules that can be generated from the current game state.
+ *              If words and rules are empty, all possible noun rules are returned (cartesian product).
+ * @param {State} state the current game state.
+ * @param {array} words possible words to filter OR an empty array.
+ * @param {array} rules possible rules to filter OR an empty array.
+ * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, noun: n}.
+ *
+ */
+function generateNounRules(state, words, rules) {
+  if (words.length == 0 && rules.length == 0) { // Generate all possible noun rules
+    return getRules(isNoun(state), isConnector(state), isNoun(state))
+  } else if (words.length > 0 && rules.length == 0) { // Only generate noun rules that can be made from words
+    return getRules(isNoun(state, words), isConnector(state, words), isNoun(state, words))
+  } else if (words.length == 0 && rules.length > 0) { // Filter noun rules that can be made from the current state
+    const all_rules = getRules(isNoun(state), isConnector(state), isNoun(state))
     return rules.filter((r) => all_rules.includes(r))
   }
   return rules
