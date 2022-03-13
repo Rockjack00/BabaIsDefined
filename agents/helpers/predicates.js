@@ -688,6 +688,48 @@ function isNoun(state, nouns) {
     return nouns;
 }
 
+/**
+ * @description Filter all of the objects that are CONNECTOR in the current game state.
+ *              If connectors is empty, all of the objects that are CONNECTOR in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} connectors possible values of CONNECTOR to filter OR an empty array.
+ * @return {array} all objects in connectors that are CONNECTOR - or all of them - in the current game state.
+ * 
+ */
+function isConnector(state, connectors) {
+    const word_objs = accessGameState(state, "rule_phys");
+    const connector_words = ["is"]
+    word_objs.filter((w) => connector_words.includes(w.name))
+
+    if (connectors.length > 0) {
+        connectors = connectors.filter((c) => word_objs.includes(c));
+    } else {
+        connectors = word_objs;
+    }
+    return connectors;
+}
+
+/**
+ * @description Filter all of the objects that are PROPERTY in the current game state.
+ *              If properties is empty, all of the objects that are PROPERTY in the current state.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} properties possible values of PROPERTY to filter OR an empty array.
+ * @return {array} all objects in properties that are PROPERTY - or all of them - in the current game state.
+ * 
+ */
+function isProperty(state, properties) {
+    const word_objs = accessGameState(state, "rule_phys");
+    const property_words = ["you", "win", "stop", "win", "push", "sink", "kill", "hot", "melt"]
+    word_objs.filter((w) => property_words.includes(w.name))
+
+    if (properties.length > 0) {
+        properties = properties.filter((p) => word_objs.includes(p));
+    } else {
+        properties = word_objs;
+    }
+    return properties;
+}
+
 module.exports = {
     isYou,
     isWin,
