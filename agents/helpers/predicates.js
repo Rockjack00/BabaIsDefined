@@ -1,5 +1,5 @@
 const { nextMove } = require("../../js/simulation");
-const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static } = require("./helpers");
+const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static, simulate } = require("./helpers");
 const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push } = require("./pathing");
 
 const simjs = require("../../js/simulation");
@@ -590,14 +590,7 @@ function canPush(state, target, directions) {
                 // check that the direction is reachable
                 if (reachablePath.length > 0) {
                     // see if it moves in the game state at that direction
-                    // TODO: change this to simjs.newState() - its probably a lot faster
-                    let pushState = reachablePath.reduce(function (
-                        currState,
-                        step
-                    ) {
-                        return simjs.nextMove(step, currState)["next_state"];
-                    },
-                        state);
+                    let pushState = simulate(state, reachablePath);
 
                     // did the state change?
                     // TODO: we may need to do this a different way when levels become more complex

@@ -1,6 +1,6 @@
 const { path } = require("express/lib/application");
 const util = require("util");
-const { accessGameState } = require("./helpers");
+const { accessGameState, Position, simulate } = require("./helpers");
 const { isNoun, isConnector, isProperty, canPushThese } = require("./predicates");
 
 /**
@@ -87,25 +87,25 @@ function activeRules(state, rules) {
   return rules;
 }
 
-// TODO: implement canChangeRules
 /**
  * @description Filter out rules in the current game state that can be changed.
- *              If rules is empty, all of the rules in effect in the current state.
+ *              If rules is empty, all of the possible rules in this level.
  * @param {state} state the current game state.
  * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filter out all rules that can be changed in the current game state.
+ * @return {array} for every rules that can be changed an object of the form {rule: <rule>, path: <path-to-change>}
  */
 function canChangeRules(state, rules) {
-  // TODO: to save some time first check if all 3 words are static (since that happens a lot)
 
-  // TODO: canActivateRules(state, rules) : can activate a rule if it isn't already?
-  //        is there a 1x3 location to build the rule?
-  //          for each candidate location:
-  //          TODO: canPushTo(state, target, location, path) : can a target be pushed to a location?
+  let outList = [];
 
-  // canDeactivateRules(state, rules) : can deactivate an already active rule?
+  // first get all the rules that can be activated
+  // TODO: implement canActivateRules
+  outList = canActivateRules(state, rules);
 
-  return [];
+  // next get all the rules that can be deactivated
+  outList.concat(canDeactivateRules(state, rules));
+
+  return outList;
 }
 
 // TODO:
@@ -117,7 +117,74 @@ function canChangeRules(state, rules) {
  * @return {array} filter out all rules that can be activated from the current game state .
  */
 function canActivateRules(state, rules) {
-  return;
+
+  // if none were given, try to make all rules
+  if (rules.length == 0) {
+    rules = generateRules(state, [], [])
+  }
+
+  // remove any rules that are already in effect
+  let existingRules = activeRules(state, rules);
+  rules.filter(rule => !existingRules.includes(rule))
+
+
+  // TODO: generate all 1x3 candidate locations in the current state
+  // locations are a list of the three positions in order
+
+  // find all the rules that can be created in those locations
+  let outList = [];
+
+  for (let rule of rules) {
+    // TODO: intelligently select candidate locations based on starting locations of the words (some form of A*)
+
+    // check if this rule can be made in each candidate location
+    for (let loc of locations) {
+      // TODO: implement atLocation(object, position)
+      let fullPath = [];
+      let nextState = state;
+      let nextPath = [];
+
+      // Get the noun in place
+      if (!atLocation(rule.noun, loc[0])) {
+        nextPath = canPushTo(state, rule.noun, loc[0], []);
+
+        // continue if there is no path to do this action
+        if (nextPath.length == 0) {
+          continue
+        }
+        fullPath.concat(nextPath);
+        nextState = simulate(state, nextPath);
+      }
+
+      // Get the connector in place
+      if (!atLocation(rule.connector, loc[1])) {
+        nextPath = canPushTo(state, rule.connector, loc[1], []);
+
+        // continue if there is no path to do this action
+        if (nextPath.length == 0) {
+          continue
+        }
+        fullPath.concat(nextPath);
+        nextState = simulate(state, nextPath);
+      }
+
+      // Get the property in place
+      if (!atLocation(rule.property, loc[2])) {
+        nextPath = canPushTo(state, rule.property, loc[2], []);
+
+        // continue if there is no path to do this action
+        if (nextPath.length == 0) {
+          continue
+        }
+        fullPath.concat(nextPath);
+      }
+
+      // we found a location that works!
+      outList.push({ "rule": rule, "path": fullPath });
+      break;
+    }
+  }
+  return outList;
 }
 
 /**
@@ -125,12 +192,12 @@ function canActivateRules(state, rules) {
  *              If rules is empty, filter from all of the active rules.
  * @param {state} state the current game state.
  * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filter out all rules that in the current game state that can be deactivated.
+ * @return {array} for every rules that can be deactivated, an object of the form {rule: <rule>, path: <path-to-change>}
  */
 function canDeactivateRules(state, rules) {
   let outList = []
 
-  // get all the rules if they are active
+  // get all the active rules if given the empty list
   if (rules.length == 0) {
     rules = activeRules(state, [])
   }
@@ -153,9 +220,20 @@ function canDeactivateRules(state, rules) {
  */
 function canDeactivateRule(state, rule) {
 
+  // make sure the rule is active
+  if (!activeRules(state, [rule])) {
+    return [];
+  }
+
+  // to save some time first check if all 3 words are static (since that happens a lot)
+  let movableWords = rule.values().filter((word) => { return !static(state, word) });
+  if (movableWords.length == 0) {
+    return [];
+  }
+
   // get the rule direction
   let direction = ruleDirection(rule);
-  for (let pushableWord of rule.values()) {
+  for (let pushableWord of movableWords) {
 
     // find all the paths that could push this word perpendicular to the rule
     let possibleDirs = []
