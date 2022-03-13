@@ -90,9 +90,9 @@ function activeRules(state, rules) {
 /**
  * @description Filter out rules in the current game state that can be changed.
  *              If rules is empty, all of the rules in effect in the current state.
- * @param {string} state the acsii representation of the current game state.
+ * @param {state} state the current game state.
  * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filter out all rules that are active in the current game state.
+ * @return {array} filter out all rules that can be changed in the current game state.
  */
 function canChangeRules(state, rules) {
   // TODO: are all 3 words static?
@@ -107,5 +107,42 @@ function canChangeRules(state, rules) {
   //   TODO: ruleDirection(state, rule) : get the direction of an existing rule
   //           canPushThese words in a direction perpendicular to the rule?
 }
+
+// TODO:
+/**
+ * @description Filter out rules that can be activated from the current game state.
+ *              If rules is empty, filter from all of the possible rules in this level.
+ * @param {state} state the current game state.
+ * @param {array} rules possible rules to filter OR an empty array.
+ * @return {array} filter out all rules that can be activated from the current game state .
+ */
+function canActivateRules(state, rules) {
+  return;
+}
+
+// TODO:
+/**
+ * @description Filter out rules in the current game state that can be deactivated.
+ *              If rules is empty, filter from all of the active rules.
+ * @param {state} state the current game state.
+ * @param {array} rules possible rules to filter OR an empty array.
+ * @return {array} filter out all rules that in the current game state that can be deactivated.
+ */
+function canDeactivateRules(state, rules) {
+  return;
+}
+
+// TODO: 
+/**
+ * @description Get the direction of an existing rule.
+ * @param {*} state the current game state
+ * @param {*} rule an active rule
+ * @returns 
+ */
+
+function ruleDirection(state, rule) {
+  return;
+}
+
 
 module.exports = { activeRules };

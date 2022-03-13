@@ -58,22 +58,23 @@ class Position {
   }
 }
 
-
 // Returns a list of phys_obj based on the corresponding element
 function accessGameState(state, element) {
   game_elements = state[element];
   return game_elements;
 }
 
+// Add the given phys_objs to a dictionary with their position as the key
 function add_to_dict(phys_objs, dictionary) {
   for (const obj of phys_objs) {
-    temp_pt = new Position(obj.x, obj.y);
+    let temp_pt = new Position(obj.x, obj.y);
     dictionary[temp_pt.get_string()] = obj;
   }
 
   return dictionary;
 }
 
+// TODO: use the Lodash.copy and Lodash.deepcopy methods
 //Both DEEPCOPY code blocks from default_AGENT.js, by Milk 
 // COPIES ANYTHING NOT AN OBJECT
 // DEEP COPY CODE FROM HTTPS://MEDIUM.COM/@ZIYOSHAMS/DEEP-COPYING-JAVASCRIPT-ARRAYS-4D5FC45A6E3E
@@ -109,6 +110,14 @@ function deepCopyObject(obj) {
   }
   return tempObj;
 }
+
+/**
+ * @description Makes a duplicate of the state. To avoid pass by reference issues
+ */
+function copy_state(state) {
+  return simjs.newState(simjs.parseMap(simjs.showState(state)));
+}
+
 /**
  * @description: Example: [a,b,c] => [[a],[b],[c],[a,b],[a,c],[b,c]]
  */
@@ -148,9 +157,12 @@ function permutations_of_list(start_list) {
   return perms;
 }
 
-
-
-// Tests if an object is static (can't change position regardless of rules)
+/**
+ * @description Tests if an object is static (can't change position regardless of rules)
+ * @param {State} state the current game state
+ * @param {object} target any object or Position on the map
+ * @returns {boolean} true|false if an object is static
+ */
 function static(state, target) {
   const x_bounds = state["obj_map"][0].length;
   const y_bounds = state["obj_map"].length;
@@ -164,36 +176,38 @@ function static(state, target) {
     return true;
   }
 
-  let neighbors = target_neighbors(state, target); // TODO: implement neighbors()
+  let target_neighbors = neighbors(state, target);
 
-  return (
-    ((static(neighbors.up) || static(neighbors.down)) &&
-      static(neighbors.left)) ||
-    static(neighbors.right)
-  );
+  return (("up" in target_neighbors && static(target_neighbors.up)) ||
+    ("down" in target_neighbors && static(target_neighbors.down))) &&
+    (("left" in target_neighbors && static(target_neighbors.left)) ||
+      ("right" in target_neighbors && static(target_neighbors.up)))
 }
 
-// gets phys_objs that are neighbors of the target
-function target_neighbors(state, target) {
+/**
+ * @description get objects that are neighbors of the target
+ * @param {State} state the current game state
+ * @param {Object} target an object or Position
+ * @returns {Object} An object of the form {direction: neighbor} containing all of the neighbors of target.
+ */
+function neighbors(state, target) {
   // make dictionary of all phys_objs and words in state. 
-  board_objs = {};
-  board_objs = add_to_dict(state["phys"], board_objs);
+  let board_objs = add_to_dict(state["phys"], {});
   board_objs = add_to_dict(state["words"], board_objs);
 
   //make target a Postition, then get up, down, left, and right neighbors as objs
-  neighbors = [];
-  target_pos = new Position(target.x, target.y);
-  dirs = ["right", "left", "up", "down"];
+  let out = {};
+  const target_pos = new Position(target.x, target.y);
 
-  for (direction of dirs) {
-    temp_pos = target_pos.get_dir(direction);
-    obj_here = board_objs[temp_pos.get_string()];
-    if (obj_here != null) {
-      neighbors.push(obj_here);
+  for (let dir of ["right", "left", "up", "down"]) {
+    let temp_pos = target_pos.get_dir(dir);
+    let neighbor = board_objs[temp_pos.get_string()];
+    if (neighbor != null) {
+      outList.update({ dir: neighbor });
     }
   }
 
-  return neighbors;
+  return outList;
 }
 
-module.exports = { accessGameState, deepCopy, deepCopyObject, add_to_dict, Position, permutations_of_list, static };
+module.exports = { accessGameState, deepCopy, deepCopyObject, copy_state, add_to_dict, Position, permutations_of_list, static };

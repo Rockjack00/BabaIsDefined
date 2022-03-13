@@ -1,5 +1,5 @@
 const { nextMove } = require("../../js/simulation");
-const { accessGameState, deepCopy, deepCopyObject, Position, add_to_dict, permutations_of_list, static } = require("./helpers");
+const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static } = require("./helpers");
 const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push } = require("./pathing");
 
 const simjs = require("../../js/simulation");
@@ -66,12 +66,6 @@ function isWin(state, wins) {
         wins = winnables;
     }
     return wins;
-}
-/**
- * @description Makes a duplicate of the state. To avoid pass by reference issues
- */
-function copy_state(state) {
-    return simjs.newState(simjs.parseMap(simjs.showState(state)));
 }
 
 /**
@@ -383,7 +377,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             moved_pushables.push(path_locs[i]);
 
             // try to push out of the way
-            pos_dirs = canPush(new_state, push_dict[cur_str], []);
+            pos_dirs = canPush(new_state, push_dict[cur_str], []).keys();
 
             if (pos_dirs.length == 0) {
                 return [[], [], []]
@@ -488,7 +482,9 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
  *              If pushes is empty, all of the objects that are PUSH in the current state.
  * @param {string} state the acsii representation of the current game state.
  * @param {array} pushes possible values of push to filter OR an empty array.
- * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state. 
+ * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state.
+ *                 returns a list of objects of the form: 
+ *                      {obj: <object>, directions: [{direction:<dir>, path: <p>}, ...]}.
  *
  */
 function canPushThese(state, pushes) {
@@ -497,8 +493,8 @@ function canPushThese(state, pushes) {
     // only check the queries that are actually pushable
     isPush(state, pushes).forEach((p) => {
         let pushableDirs = canPush(state, p, []);
-        if (pushableDirs.length > 0) {
-            outList.push({ obj: p, pushableDirs: pushableDirs });
+        if (pushableDirs.keys().length > 0) {
+            outList.push({ "obj": p, "directions": pushableDirs });
         }
     });
 
@@ -512,6 +508,7 @@ function canPushThese(state, pushes) {
  * @param {Object} target the object to push.
  * @param {array} directions possible diretions to filter OR an empty array.
  * @return {array} directions that the target can be pushed in of those given - or all possible.
+ *                 items in this list are key/value pairs of the form {direction: <dir>, path: <path-to-take>}
  *
  */
 function canPush(state, target, directions) {
@@ -630,7 +627,7 @@ function canPush(state, target, directions) {
                         simjs.showState(pushState) !==
                         simjs.showState(simjs.nextMove(c, pushState)["next_state"])
                     ) {
-                        outList.push(c);
+                        outList.push({ "direction": c, "path": reachablePath });
                         break;
                     }
                 }
@@ -640,6 +637,58 @@ function canPush(state, target, directions) {
 
     return outList;
 }
+
+// TODO:
+/**
+ * @description evaluate the path required to push a target to a location. 
+ *              If path is not empty, just see if it works.
+ * @param {*} state the current game state
+ * @param {*} target the object to be pushed
+ * @param {*} location the location the object needs to end up in
+ * @param {*} path a path to get there.
+ * @returns A path that succeeds, or the empty list if none are found.
+ */
+function canPushTo(state, target, location, path) {
+
+    /*
+    if (path.length > 0) {
+        // simulate the path and see if it ends up in the right spot
+    }
+
+        let pushed = target;
+
+        TODO: push_a_star(state, target, location) :  (yo mama's so fat she can push a star) 
+            A* where at every move, the pusher has to be able to path to the opposite direction of travel of the pushed object
+            
+            Use A* with the target, but at every node update the pusher path instead:
+                
+                let pusher_path = parent_node.pusher_path; // grab the path to the last node
+
+                step =               // the direction at this node
+                currState =          // state at this step
+                pushed_target =      // the target that now has a new location
+                
+                let pushableDirs = canPushThese(currState,pushed_target).directions
+                let direction = pushableDirs.find((choice) =>{
+                    return choice.direction == step
+                })
+
+                // if it's not empty add the path at this node
+                if (direction) {
+
+                    //concat onto the parent node's path
+                    node.pusher_path.concat(direction.path)
+
+                    // recurse
+                }
+
+                // else don't recurse
+
+    */
+
+    return [];
+}
+
 
 /**
  * @description Filter all of the objects that are NOUN in the current game state.
