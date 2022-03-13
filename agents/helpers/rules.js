@@ -30,35 +30,38 @@ class Rule {
  * @param {State} state the current game state.
  * @param {array} words possible words to filter OR an empty array.
  * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filtered rules - or all possible in triple of format {noun: n, is: i, property: p}.
+ * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, property: p}.
  *
  */
 function generateRules(state, words, rules) {
-  rules = []
+  if (words.length == 0 && rules.length == 0) { // Generate all possible rules
+    return getRules(isNoun(state), isConnector(state), isProperty(state))
+  } else if (words.length > 0 && rules.length == 0) { // Only generate rules that can be made from words
+    return getRules(isNoun(state, words), isConnector(state, words), isProperty(state, words))
+  } else if (words.length == 0 && rules.length > 0) { // Filter rules that can be made from the current state
+    const all_rules = getRules(isNoun(state), isConnector(state), isProperty(state))
+    return rules.filter((r) => all_rules.includes(r))
+  }
+  return rules
+}
 
-  // Generate all possible rules
-  if (words.length == 0 && rules.length == 0) {
-    const nouns = isNoun(state)
-    const connectors = isConnector(state)
-    const properties = isProperty(state)
-    for (n of nouns) {
-      for (c of connectors) {
-        for (p of properties) {
-          rules.push(new Rule(n, c, p))
-        }
+/**
+ * @description Gets all rules given nouns, connectors, and properties.
+ * @param {array} nouns possible noun words.
+ * @param {array} connectors possible connector words.
+ * @param {array} properties possible property words.
+ * @return {array} all possible rules in triple of format {noun: n, connector: c, property: p}.
+ *
+ */
+getRules(nouns, connectors, properties) {
+  rules = []
+  for (n of nouns) {
+    for (c of connectors) {
+      for (p of properties) {
+        rules.push(new Rule(n, c, p))
       }
     }
   }
-
-  // 2. evaluate rules -> [],[],[rules]
-
-  // 3. generate filtered subset -> [noun],[],[]
-
-  // maybe?
-  // 4. evaluate a filtered subset -> [noun],[],[rules]
-
-  // 5. evaluate a filtered set -> [nouns], [properties], []
-
   return rules
 }
 

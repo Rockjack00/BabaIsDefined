@@ -741,12 +741,12 @@ function canPushTo(state, target, end_location, path) {
 function isNoun(state, nouns) {
     const word_objs = accessGameState(state, "rule_phys");
     const noun_words = ["baba", "bone", "flag", "wall", "grass", "lava", "rock", "floor", "keke", "goop", "love"]
-    word_objs.filter((w) => noun_words.includes(w.name))
+    noun_objs.filter((w) => noun_words.includes(w.name))
 
     if (nouns.length > 0) {
-        nouns = nouns.filter((n) => word_objs.includes(n));
+        nouns = nouns.filter((n) => noun_objs.includes(n));
     } else {
-        nouns = word_objs;
+        nouns = noun_objs;
     }
     return nouns;
 }
@@ -762,12 +762,12 @@ function isNoun(state, nouns) {
 function isConnector(state, connectors) {
     const word_objs = accessGameState(state, "rule_phys");
     const connector_words = ["is"]
-    word_objs.filter((w) => connector_words.includes(w.name))
+    connector_objs = word_objs.filter((w) => connector_words.includes(w.name))
 
     if (connectors.length > 0) {
-        connectors = connectors.filter((c) => word_objs.includes(c));
+        connectors = connectors.filter((c) => connector_objs.includes(c));
     } else {
-        connectors = word_objs;
+        connectors = connector_objs;
     }
     return connectors;
 }
@@ -783,12 +783,12 @@ function isConnector(state, connectors) {
 function isProperty(state, properties) {
     const word_objs = accessGameState(state, "rule_phys");
     const property_words = ["you", "win", "stop", "win", "push", "sink", "kill", "hot", "melt"]
-    word_objs.filter((w) => property_words.includes(w.name))
+    property_objs = word_objs.filter((w) => property_words.includes(w.name))
 
     if (properties.length > 0) {
-        properties = properties.filter((p) => word_objs.includes(p));
+        properties = properties.filter((p) => property_objs.includes(p));
     } else {
-        properties = word_objs;
+        properties = property_objs;
     }
     return properties;
 }
@@ -806,5 +806,9 @@ module.exports = {
     isMelt,
     canPush,
     canPushThese,
-    canPushTo
+    canPushTo,
+    isNoun,
+    isConnector,
+    isProperty,
+    canPushThese
 };
