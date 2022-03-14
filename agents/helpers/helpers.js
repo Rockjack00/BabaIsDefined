@@ -1,3 +1,5 @@
+const simjs = require("../../js/simulation");
+
 // MAKE SURE NOT TO HAVE CIRCULAR DEPENDENCIES
 
 class Position {
@@ -203,11 +205,11 @@ function neighbors(state, target) {
     let temp_pos = target_pos.get_dir(dir);
     let neighbor = board_objs[temp_pos.get_string()];
     if (neighbor != null) {
-      outList.update({ dir: neighbor });
+      out = { ...out, dir: neighbor };
     }
   }
 
-  return outList;
+  return out;
 }
 
 /**
@@ -220,7 +222,7 @@ function neighbors(state, target) {
 function simulate(state, path) {
   // TODO: change this to simjs.newState() - its probably a lot faster
   //    maybe give the option to actually simulate (in case there could be side effects?)
-  return reachablePath.reduce(function (
+  return path.reduce(function (
     currState,
     step
   ) {
