@@ -1,7 +1,8 @@
 const { path } = require("express/lib/application");
 const util = require("util");
-const { accessGameState, Position, simulate } = require("./helpers");
-const { isNoun, isConnector, isProperty, canPushThese } = require("./predicates");
+const { accessGameState, Position, simulate, static, bounds, atLocation } = require("./helpers");
+const { isNoun, isConnector, isProperty, canPushThese, isStop } = require("./predicates");
+const simjs = require("../../js/simulation");
 
 /**
  * A class to pass around rules where the rule takes the form NOUN IS PROPERTY
@@ -34,9 +35,9 @@ class Rule {
  *
  */
 function generateRules(state, words, rules) {
-    let property_rules = generatePropertyRules(state, words, rules);
-    let noun_rules = generateNounRules(state, words, rules);
-    return property_rules.concat(noun_rules);
+  let property_rules = generatePropertyRules(state, words, rules);
+  let noun_rules = generateNounRules(state, words, rules);
+  return property_rules.concat(noun_rules);
 }
 
 /**
@@ -49,15 +50,15 @@ function generateRules(state, words, rules) {
  *
  */
 function generatePropertyRules(state, words, rules) {
-    if (words.length == 0 && rules.length == 0) { // Generate all possible property rules
-        return getRules(isNoun(state), isConnector(state), isProperty(state))
-    } else if (words.length > 0 && rules.length == 0) { // Only generate property rules that can be made from words
-        return getRules(isNoun(state, words), isConnector(state, words), isProperty(state, words))
-    } else if (words.length == 0 && rules.length > 0) { // Filter property rules that can be made from the current state
-        const all_rules = getRules(isNoun(state), isConnector(state), isProperty(state))
-        return rules.filter((r) => all_rules.includes(r))
-    }
-    return rules
+  if (words.length == 0 && rules.length == 0) { // Generate all possible property rules
+    return getRules(isNoun(state), isConnector(state), isProperty(state))
+  } else if (words.length > 0 && rules.length == 0) { // Only generate property rules that can be made from words
+    return getRules(isNoun(state, words), isConnector(state, words), isProperty(state, words))
+  } else if (words.length == 0 && rules.length > 0) { // Filter property rules that can be made from the current state
+    const all_rules = getRules(isNoun(state), isConnector(state), isProperty(state))
+    return rules.filter((r) => all_rules.includes(r))
+  }
+  return rules
 }
 
 /**
@@ -89,7 +90,7 @@ function generateNounRules(state, words, rules) {
  * @return {array} all possible rules in triple of format {noun: n, connector: c, property: p}.
  *
  */
-getRules(nouns, connectors, properties) {
+function getRules(nouns, connectors, properties) {
   rules = []
   for (n of nouns) {
     for (c of connectors) {
@@ -138,7 +139,6 @@ function canChangeRules(state, rules) {
   let outList = [];
 
   // first get all the rules that can be activated
-  // TODO: implement canActivateRules
   outList = canActivateRules(state, rules);
 
   // next get all the rules that can be deactivated
@@ -147,7 +147,6 @@ function canChangeRules(state, rules) {
   return outList;
 }
 
-// TODO:
 /**
  * @description Filter out rules that can be activated from the current game state.
  *              If rules is empty, filter from all of the possible rules in this level.
@@ -166,19 +165,17 @@ function canActivateRules(state, rules) {
   let existingRules = activeRules(state, rules);
   rules.filter(rule => !existingRules.includes(rule))
 
-
-  // TODO: generate all 1x3 candidate locations in the current state
-  // locations are a list of the three positions in order
-
   // find all the rules that can be created in those locations
   let outList = [];
 
   for (let rule of rules) {
+    // generate all 1x3 candidate locations in the current state
+    let locations = generateRuleCandidateLocations(state, rule);
+
     // TODO: intelligently select candidate locations based on starting locations of the words (some form of A*)
 
     // check if this rule can be made in each candidate location
     for (let loc of locations) {
-      // TODO: implement atLocation(object, position)
       let fullPath = [];
       let nextState = state;
       let nextPath = [];
@@ -302,13 +299,112 @@ function ruleDirection(rule) {
   return rule.noun.x < rule.connector.x ? "left" : "down";
 }
 
+/**
+ * @description Generate all of the locations that a new rule could be created, including from other 
+ * @param {State} state the current game state
+ * @param {Rule} rule A rule (that is nonexistant) to search candidate locations for
+ * @returns {Array} An array of 3-tuples of positions where a rule can be created
+ */
+function generateRuleCandidateLocations(state, rule) {
+  const [x_bounds, y_bounds] = bounds(state);
+
+  // get a range from start to end
+  function* _range(start, end) {
+    yield start;
+    if (start === end) return;
+    yield* range(start + 1, end);
+  }
+
+  let candidates = [];
+
+  // are any words in rule static?  If so, limit the space to the surrounding area
+  if (static(state, rule.noun)) {
+    // horizontal
+    candidates.push([Position(rule.noun.x, rule.noun.y), Position(rule.noun.x + 1, rule.noun.y), Position(rule.noun.x + 2, rule.noun.y)])
+    // vertical
+    candidates.push([Position(rule.noun.x, rule.noun.y), Position(rule.noun.x, rule.noun.y + 1), Position(rule.noun.x, rule.noun.y + 2)])
+  }
+  if (static(state, rule.connector)) {
+    // if the noun is static, just give the remaining possibilities
+    if (candidates.length > 0) {
+      if (atLocation(rule.connector, candidates[0][1])) {
+        return candidates[0];
+      } else if (atLocation(rule.connector, candidates[1][1])) {
+        return candidates[1];
+      }
+      return [];
+    }
+
+    // horizontal
+    candidates.push([Position(rule.connector.x - 1, rule.connector.y), Position(rule.connector.x, rule.connector.y), Position(rule.connector.x + 1, rule.connector.y)])
+    // vertical
+    candidates.push([Position(rule.connector.x, rule.connector.y - 1), Position(rule.connector.x, rule.connector.y), Position(rule.connector.x, rule.connector.y + 1)])
+  }
+  if (static(state, rule.property)) {
+    // if one of the other words is static and this isn't in either possible place, return empty
+    if (candidates.length > 0) {
+      if (atLocation(rule.property, candidates[0][2])) {
+        return candidates[0];
+      } else if (atLocation(rule.property, candidates[0][2])) {
+        return candidates[1];
+      }
+      return [];
+    }
+
+    // horizontal
+    candidates.push([Position(rule.property.x - 2, rule.property.y), Position(rule.property.x - 1, rule.property.y), Position(rule.property.x, rule.property.y)])
+    // vertical
+    candidates.push([Position(rule.property.x, rule.property.y - 2), Position(rule.property.x, rule.property.y - 1), Position(rule.property.x, rule.property.y)])
+  }
+  // if something is static, return the chocies.
+  if (candidates.length > 0) {
+    return candidates;
+  }
+
+  // Find candidates (filter any static options)
+  for (let col in _range(1, x_bounds - 1)) {
+    for (let row in _range(1, y_bounds - 1)) {
+      let pos = new Position(col, row)
+
+      // from https://stackoverflow.com/questions/5072136/javascript-filter-for-objects
+      function _objectFilter(obj, predicate) {
+        return Object.fromEntries(Object.entries(obj).filter(predicate));
+      }
+
+      // get all immovable obstacles that aren't words in this rule
+      let obstacles = _objectFilter(neighbors(pos), ([_, neighbor]) => {
+
+        if (static(state, neighbor) || isStop(state, [neighbor])) {
+          return true;
+        }
+
+        // check if this neighbor is a word in this rule
+        return !rule.values().some((word) => {
+          return atLocation(word, neighbor)
+        })
+      })
+
+      // horizontal
+      if (!(obstacles.left || obstacles.right)) {
+        candidates.push([Position(col - 1, row), Position(col, row), Position(col + 1, row)])
+      }
+      // vertical
+      if (!(obstacles.up || obstacles.down)) {
+        candidates.push([Position(col, row - 1), Position(col, row), Position(col, row + 1)])
+      }
+    }
+  }
+
+  return candidates;
+}
+
 
 module.exports = {
-    generateRules,
-    generatePropertyRules,
-    generateNounRules,
-    canChangeRules,
-    canActivateRules,
-    activeRules,
-    getRules
+  generateRules,
+  generatePropertyRules,
+  generateNounRules,
+  canChangeRules,
+  canActivateRules,
+  activeRules,
+  getRules
 };

@@ -632,7 +632,6 @@ function canPush(state, target, directions) {
     return outList;
 }
 
-// TODO:
 /**
  * @description evaluate the path required to push a target to a location. 
  *              If path is not empty, just see if it works.
