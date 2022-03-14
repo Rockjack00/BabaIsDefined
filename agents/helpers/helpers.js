@@ -179,10 +179,10 @@ function static(state, target) {
 
   let target_neighbors = neighbors(state, target);
 
-  return (("up" in target_neighbors && static(target_neighbors.up)) ||
-    ("down" in target_neighbors && static(target_neighbors.down))) &&
-    (("left" in target_neighbors && static(target_neighbors.left)) ||
-      ("right" in target_neighbors && static(target_neighbors.up)))
+  return (("up" in target_neighbors && static(state, target_neighbors.up)) ||
+    ("down" in target_neighbors && static(state, target_neighbors.down))) &&
+    (("left" in target_neighbors && static(state, target_neighbors.left)) ||
+      ("right" in target_neighbors && static(state, target_neighbors.up)))
 }
 
 /**
@@ -221,6 +221,8 @@ function neighbors(state, target) {
 function simulate(state, path) {
   // TODO: change this to simjs.newState() - its probably a lot faster
   //    maybe give the option to actually simulate (in case there could be side effects?)
+  state = copy_state(state);
+
   return path.reduce(function (
     currState,
     step

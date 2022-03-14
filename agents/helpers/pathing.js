@@ -285,7 +285,7 @@ function a_star_avoid_push(state, start_pos, end_pos) {
 
 
 
-  return a_star(start_pos, end_pos, state, true, []);
+  return a_star(start_pos, end_pos, state, true, [], false);
 }
 
 function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
@@ -334,13 +334,13 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   obstacles = add_to_dict(stoppables, obstacles);
   obstacles = add_to_dict(words, obstacles);
 
-  const [x_bounds, y_bounds] = bounds(state)
+  // const [x_bounds, y_bounds] = bounds(state)
 
   if (pushing) {
     path_end_node = a_star_pushed_solver(start_pos, end_pos, obstacles)
   }
   else {
-    path_end_node = a_star_solver(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
+    path_end_node = a_star_solver(start_pos, end_pos, obstacles, move_actions, state, []);
   }
 
   if (path_end_node == null) {
@@ -418,7 +418,7 @@ function get_manhattan(start, end) {
 
 
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
-function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bounds, path) {
+function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, path) {
   // A* Search Algorithm
   // 1.  Initialize the open list
   open_list = [];
@@ -460,8 +460,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
-      (next_space.x > 0) && (next_space.y > 0)) {
+      game_bound_check(state, next_space)) {
       successors.push(next_node);
     }
 
@@ -470,8 +469,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
-      (next_space.x > 0) && (next_space.y > 0)) {
+      game_bound_check(state, next_space)) {
       successors.push(next_node);
     }
 
@@ -480,8 +478,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
-      (next_space.x > 0) && (next_space.y > 0)) {
+      game_bound_check(state, next_space)) {
       successors.push(next_node);
     }
 
@@ -490,8 +487,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
-      (next_space.x > 0) && (next_space.y > 0)) {
+      game_bound_check(state, next_space)) {
       successors.push(next_node);
     }
 
@@ -556,8 +552,6 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
 
     // e) push q on the closed list
     closed_list.push(q);
-
-
 
     // end (while loop)
   }

@@ -70,11 +70,7 @@ function isWin(state, wins) {
 }
 
 /**
- * @description Filter all of the objects that are WIN in the current game state.
- *              If wins is empty, all of the objects that are WIN in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} wins possible winnable objects OR an empty array.
- * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
+ * start object. Target object
  */
 function isReachable(state, start, target, path) {
     if (path.length > 0) {
@@ -115,10 +111,11 @@ function isReachable(state, start, target, path) {
         // retry A*
         // do this until no pushables are left. Return empty list if this happens.
         if (new_astar.length == 0) {
+            clearing_path = [];
             avoid_these_1 = moved_pushables;
             avoid_perms = permutations_of_list(avoid_these_1);
             for (avoid_these of avoid_perms) {
-                while ((new_astar.length == 0) && (clearing_path.length != 0)) {
+                while (new_astar.length == 0) {
                     // try A* and clear path again, but consider the last pushable an obstacle.
                     [new_astar, path_locations] = a_star_reachable(state, start, target, false, avoid_these);
                     [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, avoid_these);
@@ -135,9 +132,9 @@ function isReachable(state, start, target, path) {
                     avoid_these = avoid_these.concat(moved_pushables);
 
                 }
-                if (new_astar.length != 0) {
-                    break;
-                }
+                // if (new_astar.length != 0) {
+                //     break;
+                // }
             }
         }
 
@@ -370,6 +367,9 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     //the running path to move all objects out of the way.
     running_path = [];
 
+    // checks if it can push, but cannot path out of the way
+    danger_push = [];
+
     // step through the path to find pushables that are in the way
     for (let i = 0; i < path_locs.length; ++i) {
         cur_str = path_locs[i].get_string();
@@ -378,15 +378,14 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             moved_pushables.push(path_locs[i]);
 
             // try to push out of the way
-            pos_dirs = canPush(new_state, push_dict[cur_str], []).keys();
+            pos_dirs = canPush(new_state, push_dict[cur_str], []);
 
             if (pos_dirs.length == 0) {
-                return [[], [], []]
+                break;
             }
 
             chosen_dir = null;
             for (pos_dir of pos_dirs) {
-                chosen_dir = pos_dir;
                 //step in path direction
                 step_str = cur_str;
                 step_loc = path_locs[i];
@@ -400,15 +399,23 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 }
 
                 // check if stepping ended on a obstacle
-                if (!(step_str in obst_dict) &&
-                    game_bound_check(new_state, step_loc)) {
+                // game_bound = game_bound_check(new_state, step_loc);
+                if ((step_str in obst_dict) ||
+                    (!game_bound_check(new_state, step_loc))) {
+                    danger_push.push(pos_dir);
                     continue;
                 }
                 else {
+                    danger_push = [];
+                    chosen_dir = pos_dir;
                     break;
                 }
 
 
+            }
+            // check if path could not be cleared. This is when we incrementally push and recheck
+            if (chosen_dir == null) {
+                break;
             }
 
             // generate path to move pushable out of the way
@@ -416,7 +423,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             // first, go to the correct side of the pushable
             // note that the side of the pushable is opposite the direction you want to push it
             side_of_push = null;
-            switch (pos_dir) {
+            switch (chosen_dir) {
                 case "right":
                     side_of_push = path_locs[i].get_left();
                     break;
@@ -429,8 +436,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 case "down":
                     side_of_push = path_locs[i].get_up();
                     break;
-                default:
-                    console.log("While loop error in canClearPath.")
             }
 
 
@@ -442,7 +447,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             // side_of_push is start location
             counter = 0;
             cur_loc = side_of_push;
-            push_loc_str = cur_loc.get_dir(chosen_dir).get_dir(chosen_dir).get_string();
+            push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
 
             // do checks on the pushable, then count as move
 
@@ -471,6 +476,67 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             for (move of full_path) {
                 let { next_state, won } = simjs.nextMove(move, new_state);
                 new_state = next_state;
+            }
+
+            // if it can push, just not out of the path, recursively call isReachable
+            if (danger_push.length != 0) {
+                cur_state = copy_state(state);
+                prev_state = null;
+                for (push_dir in danger_push) {
+                    // set the last location as the start_obj location
+                    last_loc = new Position(start_obj.x, start_obj.y);
+
+                    // first, go to the correct side of the pushable
+                    // note that the side of the pushable is opposite the direction you want to push it
+                    side_of_push = null;
+                    switch (pos_dir) {
+                        case "right":
+                            side_of_push = path_locs[i].get_left();
+                            break;
+                        case "up":
+                            side_of_push = path_locs[i].get_dn();
+                            break;
+                        case "left":
+                            side_of_push = path_locs[i].get_right();
+                            break;
+                        case "down":
+                            side_of_push = path_locs[i].get_up();
+                            break;
+                    }
+
+
+                    //path to side of push
+                    start_loc = last_loc;
+                    [path_to_side, temp_list] = a_star_avoid_push(new_state, start_loc, side_of_push);
+
+                    // and last_loc is the location YOU end at after pushing the object out of the way
+                    // simulate path to get new state. Set to "new_state", for use moving the next pushable
+                    for (move of path_to_side) {
+                        let { next_state, won } = simjs.nextMove(move, cur_state);
+                        cur_state = next_state;
+                    }
+                    last_loc = side_of_push;
+
+                    cur_yous = isYou(cur_state, []);
+                    prev_yous = [];
+
+                    // move in direction one space. get the new state.
+                    let { next_state, won } = simjs.nextMove(move, cur_state);
+                    last_loc = last_loc.get_dir(push_dir);
+                    cur_state = next_state;
+                    obj_dict = add_to_dict(cur_state.phys, {});
+                    obj_dict = add_to_dict(cur_state.words, obj_dict);
+
+                    // recursively retry isReachable with new state
+                    start_loc = obj_dict[last_loc.get_string()];
+                    target_loc = path_locs[path_locs.length - 1];
+                    path_reachable = isReachable(cur_state, start_loc, target_loc, []);
+
+                    if (path_reachable.length != 0) {
+                        running_path = [push_dir].concat(path_reachable);
+                    }
+                }
+
             }
         }
     }
@@ -559,7 +625,7 @@ function canPush(state, target, directions) {
         // ignoring side effects, greedily see if any YOU object can push the target
 
         for (let you of yous) {
-            let reachablePath = isReachable(state, you, pushTarget, []);
+            // let reachablePath = isReachable(state, you, pushTarget, []);
 
             // get the starting location for this push
             switch (c) {
