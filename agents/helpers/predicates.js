@@ -1,30 +1,7 @@
-const { nextMove } = require("../../js/simulation");
 const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static, simulate } = require("./helpers");
 const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push, a_star_pushing } = require("./pathing");
-const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, activeRules, getRules } = require("./rules");
 
 const simjs = require("../../js/simulation");
-
-/*  All possible state objects, for reference
- *  let om = state['obj_map'];
-    let bm = state['back_map'];
-    let is_connectors = state['is_connectors'];
-    let rules = state['rules'];
-    let rule_objs = state['rule_objs'];
-    let sort_phys = state['sort_phys'];
-    let phys = state['phys'];
-    let words = state['words'];
-    let p = state['players'];
-    let am = state['auto_movers'];
-    let w = state['winnables'];
-    let u = state['pushables'];
-    let s = state['stoppables'];
-    let k = state['killers'];
-    let n = state['sinkers'];
-    let o = state['overlaps'];
-    let uo = state['unoverlaps'];
-    let f = state['featured'];
- */
 
 /**
  * Each predicate in this file is a filter that will return either a filtered array of given options,
@@ -657,28 +634,8 @@ function canPush(state, target, directions) {
                 // check that the direction is reachable
                 if (reachablePath.length > 0) {
                     // see if it moves in the game state at that direction
-                    let pushState = simulate(state, reachablePath);
-
-                    // did the state change?
-                    // TODO: we may need to do this a different way when levels become more complex
-                    //       maybe could check if a "you" object made it into the target location or something
-
-                    if (
-                        simjs.showState(pushState) !==
-                        simjs.showState(simjs.nextMove(c, pushState)["next_state"])
-                    ) {
-                        outList.push(c);
-                        break;
-                    }
-                }
-                // check that the direction is reachable
-                if (reachablePath.length > 0) {
-                    // see if it moves in the game state at that direction
                     // TODO: change this to simjs.newState() - its probably a lot faster
-                    let pushState = reachablePath.reduce(function (currState, step) {
-                        return simjs.nextMove(step, currState)["next_state"];
-                    }, state);
-
+                    let pushState = simulate(state, reachablePath)
                     // did the state change?
                     // TODO: we may need to do this a different way when levels become more complex
                     //       maybe could check if a "you" object made it into the target location or something
@@ -799,15 +756,15 @@ function canPushTo(state, target, end_location, path) {
 /**
  * @description Filter all of the objects that are NOUN in the current game state.
  *              If nouns is empty, all of the objects that are NOUN in the current state.
- * @param {string} state the acsii representation of the current game state.
+ * @param {State} state the acsii representation of the current game state.
  * @param {array} nouns possible values of NOUN to filter OR an empty array.
  * @return {array} all objects in nouns that are NOUN - or all of them - in the current game state.
  * 
  */
 function isNoun(state, nouns) {
-    const word_objs = accessGameState(state, "rule_phys");
+    const word_objs = accessGameState(state, "words");
     const noun_words = ["baba", "bone", "flag", "wall", "grass", "lava", "rock", "floor", "keke", "goop", "love"]
-    noun_objs.filter((w) => noun_words.includes(w.name))
+    noun_objs = word_objs.filter((w) => noun_words.includes(w.name))
 
     if (nouns.length > 0) {
         nouns = nouns.filter((n) => noun_objs.includes(n));
@@ -826,7 +783,7 @@ function isNoun(state, nouns) {
  * 
  */
 function isConnector(state, connectors) {
-    const word_objs = accessGameState(state, "rule_phys");
+    const word_objs = accessGameState(state, "words");
     const connector_words = ["is"]
     connector_objs = word_objs.filter((w) => connector_words.includes(w.name))
 
@@ -847,7 +804,7 @@ function isConnector(state, connectors) {
  * 
  */
 function isProperty(state, properties) {
-    const word_objs = accessGameState(state, "rule_phys");
+    const word_objs = accessGameState(state, "words");
     const property_words = ["you", "win", "stop", "win", "push", "sink", "kill", "hot", "melt"]
     property_objs = word_objs.filter((w) => property_words.includes(w.name))
 
@@ -859,61 +816,6 @@ function isProperty(state, properties) {
     return properties;
 }
 
-/**
- * @description Find all possible "win" rules that the agent is able to activate.
- *              If passed a non-empty list of nouns, it will only find "win" rules using those nouns
- * @param {string} state the acsii representation of the current game state.
- * @param {array} nouns a set of noun words in the game state OR an empty array.
- * @return {array} a list of rules and their paths of activation, as created by canActivateRules.
- *
- */
-function assertWin(state, nouns) {
-    let property_rules = [];
-    if (nouns.length == 0) {
-        property_rules = generatePropertyRules(state, [], []);
-    } else {
-        let win_words = isProperty(state, []).filter((p) => p.name = "win");
-        let connectors = isConnector(state, []);
-        property_rules = generatePropertyRules(state, nouns.concat(win_words, connectors));
-    }
-
-    let win_rules = property_rules.filter((r) => r.property.name = "win");
-    return canActivateRules(state, win_rules);
-}
-
-/**
- * @description Find all possible rules that change one object into another object type that is already "win" that the agent is able to activate.
- *              If passed a non-empty list of subject_nouns, it will only find rules using those nouns AS THE SUBJECT(the thing being transformed)
- * @param {string} state the acsii representation of the current game state.
- * @param {array} subject_nouns a set of subject noun words in the game state OR an empty array.
- * @return {array} a list of rules and their paths of activation, as created by canActivateRules.
- *
- */
-function createWin(state, subject_nouns) {
-    let win_rules = activeRules(state, []).filter((r) => r.property.name = "win");
-    let win_nouns = []
-    let win_connectors = []
-    let has_win_property = []
-    for (rule of win_rules) {
-        win_nouns.push(rule.noun);
-        win_connectors.push(rule.connector)
-        has_win_property.push(rule.noun.name);
-    }
-
-    //get a list of usable subject nouns
-    let usable_subjects = [];
-    if (subject_nouns.length == 0) {
-        usable_subjects = isNoun(state, []).filter((n) => !win_nouns.includes(n.name));
-    } else {
-        usable_subjects = subject_nouns;
-    }
-
-    //filter any connector and noun object that has win property but is not part of a win rule
-    let usable_connectors = isConnector(state, []).filter((c) => !win_connectors.includes(c));
-    let usable_win_nouns = isNoun(state, []).filter((n) => !win_nouns.includes(n) && has_win_property.includes(n.name));
-    let possible_rules = getRules(usable_subjects, usable_connectors, usable_win_nouns);
-    return canActivateRules(state, possible_rules);
-}
 
 module.exports = {
     isYou,
@@ -932,6 +834,4 @@ module.exports = {
     isNoun,
     isConnector,
     isProperty,
-    assertWin,
-    createWin
 };
