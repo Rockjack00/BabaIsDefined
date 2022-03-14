@@ -1,9 +1,11 @@
 //const { isYou, isWin, isReachable, rule } = require("./predicates");
 const { isYou, isWin, isReachable } = require("./predicates");
 const simjs = require("../../js/simulation");
+const { best_sol } = require("../random_AGENT");
 
 // Optionally do eager evaluation (depth first)
 const EAGER = false;
+var MAX_SEQ = 50;
 
 /**
  * @description Find a winning path in the current game state.
@@ -81,7 +83,25 @@ function solve_level(state) {
   //   }
 
   /* Couldn't find winning path */
-  return false;
+  return default_solve(state)
+}
+
+function default_solve(state) {
+  console.log("Could not find winning path.\n Default behavior: attempting random steps.")
+  var path = best_sol()
+  if (path.length == 0) {
+    console.log("Unable to solve this level.")
+    return []
+  } else if (validSolution(path, state)) {
+    return path
+  } else { // path to new state
+    for (let i = 0; i < path.length; i++) {
+      // iterate over game state
+      let res = simjs.nextMove(path[i], state);
+      state = res['next_state'];
+    }
+  }
+  return solve_level(state) // try to solve level with new state
 }
 
 module.exports = { solve_level };
