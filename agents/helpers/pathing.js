@@ -1,6 +1,6 @@
 
 const { check } = require("prettier");
-const { accessGameState, add_to_dict, Position } = require("./helpers");
+const { accessGameState, add_to_dict, Position, bounds } = require("./helpers");
 
 // for Reference, this are the position actions
 const possActions = ["space", "right", "up", "left", "down"];
@@ -139,8 +139,7 @@ function floodfill(start_pos, end_pos, state) {
   obstacles = add_to_dict(pushables, obstacles);
   obstacles = add_to_dict(words, obstacles);
 
-  x_bounds = state["obj_map"][0].length;
-  y_bounds = state["obj_map"].length;
+  const [x_bounds, y_bounds] = bounds(state);
 
   path = ff_recur(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
 
@@ -162,10 +161,9 @@ function floodfill(start_pos, end_pos, state) {
 // }
 
 function game_bound_check(state, next_space) {
-  x_bounds = state["obj_map"][0].length;
-  y_bounds = state["obj_map"].length;
+  const [x_bounds, y_bounds] = bounds(state);
 
-  return (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
+  return (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
     (next_space.x > 0) && (next_space.y > 0);
 }
 
@@ -336,8 +334,7 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   obstacles = add_to_dict(stoppables, obstacles);
   obstacles = add_to_dict(words, obstacles);
 
-  x_bounds = state["obj_map"][0].length;
-  y_bounds = state["obj_map"].length;
+  const [x_bounds, y_bounds] = bounds(state)
 
   if (pushing) {
     path_end_node = a_star_pushed_solver(start_pos, end_pos, obstacles)
@@ -463,7 +460,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
+      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
       (next_space.x > 0) && (next_space.y > 0)) {
       successors.push(next_node);
     }
@@ -473,7 +470,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
+      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
       (next_space.x > 0) && (next_space.y > 0)) {
       successors.push(next_node);
     }
@@ -483,7 +480,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
+      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
       (next_space.x > 0) && (next_space.y > 0)) {
       successors.push(next_node);
     }
@@ -493,7 +490,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, x_bounds,
     next_space = next_node.get_pos();
     next_str = next_node.get_pos().get_string();
     if (!(next_str in obstacles) &&
-      (next_space.x < x_bounds - 1) && (next_space.y < y_bounds - 1) &&
+      (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
       (next_space.x > 0) && (next_space.y > 0)) {
       successors.push(next_node);
     }

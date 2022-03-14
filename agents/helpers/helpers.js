@@ -166,8 +166,7 @@ function permutations_of_list(start_list) {
  * @returns {boolean} true|false if an object is static
  */
 function static(state, target) {
-  const x_bounds = state["obj_map"][0].length;
-  const y_bounds = state["obj_map"].length;
+  const [x_bounds, y_bounds] = bounds(state);
 
   if (
     target.x == 0 ||
@@ -241,6 +240,15 @@ function atLocation(object, position) {
   return object.x == position.x && object.y == position.y
 }
 
+/**
+ * 
+ * @param {State} state 
+ * @returns {Array} of integer bounds of the state
+ */
+function bounds(state) {
+  return [state["obj_map"][0].length - 1, state["obj_map"].length - 1];
+}
+
 module.exports = {
   accessGameState,
   deepCopy,
@@ -251,5 +259,6 @@ module.exports = {
   permutations_of_list,
   static,
   simulate,
+  bounds,
   atLocation
 };
