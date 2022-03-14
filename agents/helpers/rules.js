@@ -303,4 +303,12 @@ function ruleDirection(rule) {
 }
 
 
-module.exports = { activeRules };
+module.exports = {
+    generateRules,
+    generatePropertyRules,
+    generateNounRules,
+    canChangeRules,
+    canActivateRules,
+    activeRules,
+    getRules
+};
