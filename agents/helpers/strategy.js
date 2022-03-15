@@ -17,15 +17,12 @@ var MAX_SEQ = 50;
 function solve_level(state) {
   var yous = isYou(state, []);
 
-
   /// DEBUG ///
 
   let changeable_Rules = canChangeRules(state, []);
   console.log(changeable_Rules);
 
   /// END DEBUG ///
-
-
 
   /**
    * Are any objects that are YOU also WIN?
@@ -95,6 +92,12 @@ function solve_level(state) {
   return default_solve(state)
 }
 
+/**
+ * @description Employs a default (random) solver if no path can be found by the intelligent solver.
+ *              The goal is either to find a winning path, or to find a new state that can be handed to the intelligent solver.
+ * @param {string} state the acsii representation of the current game state.
+ * @returns {array} a winning path OR calls solve_level again with the updated state.
+ */
 function default_solve(state) {
   console.log("Could not find winning path.\n Default behavior: attempting random steps.")
   var path = best_sol()

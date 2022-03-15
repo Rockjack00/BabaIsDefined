@@ -9,7 +9,6 @@ const simjs = require("../../js/simulation");
  */
 class Rule {
   /**
-   *
    * @param {object} noun
    * @param {object} connector
    * @param {object} property
@@ -294,7 +293,6 @@ function canDeactivateRule(state, rule) {
  * @param {Rule} rule an active rule
  * @returns {string} "down"|"right" if the rule reads top-to-bottom|left-to-right
  */
-
 function ruleDirection(rule) {
   return rule.noun.x < rule.connector.x ? "left" : "down";
 }
@@ -397,7 +395,6 @@ function generateRuleCandidateLocations(state, rule) {
 
   return candidates;
 }
-
 
 module.exports = {
   generateRules,

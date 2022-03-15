@@ -49,8 +49,6 @@ class Position {
 
       case "down":
         return this.get_dn();
-
-
     }
     return null;
   }
@@ -77,7 +75,7 @@ function add_to_dict(phys_objs, dictionary) {
 }
 
 // TODO: use the Lodash.copy and Lodash.deepcopy methods
-//Both DEEPCOPY code blocks from default_AGENT.js, by Milk 
+// Both DEEPCOPY code blocks from default_AGENT.js, by Milk 
 // COPIES ANYTHING NOT AN OBJECT
 // DEEP COPY CODE FROM HTTPS://MEDIUM.COM/@ZIYOSHAMS/DEEP-COPYING-JAVASCRIPT-ARRAYS-4D5FC45A6E3E
 function deepCopy(arr) {
@@ -240,7 +238,6 @@ function neighbors(state, target) {
  * @param {Array} path the list of steps to step the simulation through
  * @returns 
  */
-
 function simulate(state, path) {
   // TODO: change this to simjs.newState() - its probably a lot faster
   //    maybe give the option to actually simulate (in case there could be side effects?)
@@ -266,7 +263,6 @@ function atLocation(object, position) {
 }
 
 /**
- * 
  * @param {State} state 
  * @returns {Array} of integer bounds of the state
  */

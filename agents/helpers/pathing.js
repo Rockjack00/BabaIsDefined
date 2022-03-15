@@ -1,4 +1,3 @@
-
 const { check } = require("prettier");
 const { accessGameState, add_to_dict, Position, bounds } = require("./helpers");
 
@@ -30,64 +29,6 @@ class Node {
     return this.position;
   }
 }
-
-// class Position {
-//   //assuming 0,0 starts in top left, and vertical is y, horizontal is x
-
-//   // todo - relocate this to a Typescript file?
-
-//   constructor(x, y) {
-//     this.x = x;
-//     this.y = y;
-//   }
-
-//   get_up() {
-//     var new_x = this.x;
-//     var new_y = this.y - 1;
-//     return new Position(new_x, new_y);
-//   }
-
-//   get_dn() {
-//     var new_x = this.x;
-//     var new_y = this.y + 1;
-//     return new Position(new_x, new_y);
-//   }
-
-//   get_left() {
-//     var new_x = this.x - 1;
-//     var new_y = this.y;
-//     return new Position(new_x, new_y);
-//   }
-
-//   get_right() {
-//     var new_x = this.x + 1;
-//     var new_y = this.y;
-//     return new Position(new_x, new_y);
-//   }
-
-//   get_dir(dir_str) {
-//     switch (dir_str) {
-//       case "right":
-//         return this.get_right();
-
-//       case "left":
-//         return this.get_left();
-
-//       case "up":
-//         return this.get_up();
-
-//       case "down":
-//         return this.get_dn();
-
-
-//     }
-//     return null;
-//   }
-
-//   get_string() {
-//     return "" + this.x + ", " + this.y;
-//   }
-// }
 
 //TODO - Return what is preventing movement. An array that marks what types of objects are in the way.
 // - to do this, we need to edit the inputs to floodfill reachable
@@ -140,25 +81,13 @@ function floodfill(start_pos, end_pos, state) {
   obstacles = add_to_dict(words, obstacles);
 
   const [x_bounds, y_bounds] = bounds(state);
-
   path = ff_recur(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
-
-
   if (path == null) {
     return [];
   }
   return path;
 }
 
-// NOW IN helpers.js
-// // adds all items in the list to the dictionary, keyed by their location.
-// function add_to_dict(phys_objs, obstacles) {
-//   for (const obj of phys_objs) {
-//     temp_pt = new Position(obj.x, obj.y);
-//     obstacles[temp_pt.get_string()] = obj;
-//   }
-//   return obstacles;
-// }
 
 function game_bound_check(state, next_space) {
   const [x_bounds, y_bounds] = bounds(state);
@@ -266,7 +195,6 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
 
 // A* Pathing
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
-
 function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these) {
   start_pos = new Position(start_obj.x, start_obj.y);
   end_pos = new Position(end_obj.x, end_obj.y);
@@ -276,15 +204,9 @@ function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these)
 
 function a_star_pushing(state, start_pos, end_pos) {
   return a_star(start_pos, end_pos, state, true, [], true);
-
 }
 
 function a_star_avoid_push(state, start_pos, end_pos) {
-  // start_pos = new Position(start_obj.x, start_obj.y);
-  // end_pos = new Position(end_obj.x, end_obj.y);
-
-
-
   return a_star(start_pos, end_pos, state, true, [], false);
 }
 
@@ -409,13 +331,11 @@ function get_move_positions(node) {
   return moves;
 }
 
-
 function get_manhattan(start, end) {
   x_dist = Math.abs(start.x - end.x);
   y_dist = Math.abs(start.y - end.y);
   return x_dist + y_dist;
 }
-
 
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, path) {
@@ -448,47 +368,18 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
     q = open_list[q_index]; // get node
     open_list.splice(q_index, 1); // remove node from list
 
-    // c) generate q's 4 successors and set their 
-    //    parents to q
-    // TODO: put in loop
-
+    // c) generate q's 4 successors and set their parents to q
     // for refence: const possActions = ["space", "right", "up", "left", "down"];
-
-    // UP SUCCESSOR
     successors = [];
-    next_node = new Node(q.get_pos().get_up(), null, q, "up");
-    next_space = next_node.get_pos();
-    next_str = next_node.get_pos().get_string();
-    if (!(next_str in obstacles) &&
-      game_bound_check(state, next_space)) {
-      successors.push(next_node);
-    }
-
-    // DOWN SUCCESSOR
-    next_node = new Node(q.get_pos().get_dn(), null, q, "down");
-    next_space = next_node.get_pos();
-    next_str = next_node.get_pos().get_string();
-    if (!(next_str in obstacles) &&
-      game_bound_check(state, next_space)) {
-      successors.push(next_node);
-    }
-
-    // LEFT SUCCESSOR
-    next_node = new Node(q.get_pos().get_left(), null, q, "left");
-    next_space = next_node.get_pos();
-    next_str = next_node.get_pos().get_string();
-    if (!(next_str in obstacles) &&
-      game_bound_check(state, next_space)) {
-      successors.push(next_node);
-    }
-
-    // RIGHT SUCCESSOR
-    next_node = new Node(q.get_pos().get_right(), null, q, "right");
-    next_space = next_node.get_pos();
-    next_str = next_node.get_pos().get_string();
-    if (!(next_str in obstacles) &&
-      game_bound_check(state, next_space)) {
-      successors.push(next_node);
+    dirs = ["up", "down", "left", "right"]
+    for (dir of dirs) {
+      next_node = get_node(q, dir)
+      next_space = next_node.get_pos();
+      next_str = next_node.get_pos().get_string();
+      if (!(next_str in obstacles) &&
+        game_bound_check(state, next_space)) {
+        successors.push(next_node);
+      }
     }
 
     // d) for each successor
@@ -531,7 +422,6 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
       //     iV) if a node with the same position as 
       //         successor  is in the CLOSED list which has
       //         a lower f than successor, skip this successor
-
       for (let i = 0; i < closed_list.length; ++i) {
         list_node = closed_list[i];
         if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
@@ -545,10 +435,8 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
         open_list.push(succ_node);
       }
 
-
       //  end (for loop)
     }
-
 
     // e) push q on the closed list
     closed_list.push(q);
@@ -558,6 +446,19 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
   return start_node;
 }
 
+function get_node(q, dir) {
+  switch (dir) {
+    case "up":
+      return new Node(q.get_pos().get_up(), null, q, dir);
+    case "down":
+      return new Node(q.get_pos().get_dn(), null, q, dir);
+    case "left":
+      return new Node(q.get_pos().get_left(), null, q, dir);
+    case "right":
+      return new Node(q.get_pos().get_right(), null, q, dir);
+  }
+  throw new Error("ERROR: Expected one of direction 'up', 'down', 'left', or 'right', but got direction " + dir)
+}
 
 function push_turn_check(obstacles, next_node) {
   cur_node = next_node.parent
@@ -568,10 +469,7 @@ function push_turn_check(obstacles, next_node) {
 
   next_pos = next_node.get_pos();
   cur_pos = cur_node.get_pos();
-
   check_these = []; // will become a list of two spaces
-
-
 
   switch (cur_node.move + next_node.move) {
     case "right" + "down":
@@ -641,10 +539,9 @@ function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
     // for refence: const possActions = ["space", "right", "up", "left", "down"];
 
     successors = [];
-    actions = ["right", "up", "left", "down"]
-
-    for (act of actions) {
-      next_node = new Node(q.get_pos().get_dir(act), null, q, act);
+    dirs = ["up", "down", "left", "right"]
+    for (dir of dirs) {
+      next_node = get_node(q, dir)
       next_space = next_node.get_pos();
       next_str = next_node.get_pos().get_string();
       if (!(next_str in obstacles) &&
@@ -652,8 +549,6 @@ function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
         successors.push(next_node);
       }
     }
-
-
 
     // d) for each successor
     for (let i = 0; i < successors.length; ++i) {
@@ -695,7 +590,6 @@ function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
       //     iV) if a node with the same position as 
       //         successor  is in the CLOSED list which has
       //         a lower f than successor, skip this successor
-
       for (let i = 0; i < closed_list.length; ++i) {
         list_node = closed_list[i];
         if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
@@ -709,22 +603,15 @@ function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
         open_list.push(succ_node);
       }
 
-
       //  end (for loop)
     }
 
-
     // e) push q on the closed list
     closed_list.push(q);
-
-
 
     // end (while loop)
   }
   return start_node;
 }
-
-
-
 
 module.exports = { floodfill_reachable, a_star_reachable, Position, add_to_dict, game_bound_check, a_star_avoid_push, a_star_pushing };

@@ -119,17 +119,10 @@ function isReachable(state, start, target, path) {
         full_path = clearing_path.concat(new_astar);
 
         return full_path;
-
     }
 }
 
-/**
- * @description Filter all of the objects that are WIN in the current game state.
- *              If wins is empty, all of the objects that are WIN in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} wins possible winnable objects OR an empty array.
- * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
- */
+/*
 function isReachableAvoidPush(state, start, target, path) {
     if (path.length > 0) {
         // step through the path. Check if gets to the target
@@ -146,6 +139,7 @@ function isReachableAvoidPush(state, start, target, path) {
         return a_star_avoid_push(state, start, target);
     }
 }
+*/
 
 /**
  * @description Filter all of the objects that are MOVE in the current game state.
@@ -293,7 +287,6 @@ function isMelt(state, melts) {
  * @param {array} avoid_these Avoid these pushable locations, because a previous time they caused a loss.
  * @return {[array,array]} a new path that pushes the obstacles out of the way.
  *                          and a list of the moved obstacles.
- *
  */
 function canClearPath(state, path_locs, start_obj, avoid_these) {
     let moved_pushables = [];
@@ -396,7 +389,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             }
 
             // generate path to move pushable out of the way
-
             // first, go to the correct side of the pushable
             // note that the side of the pushable is opposite the direction you want to push it
             side_of_push = null;
@@ -427,7 +419,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
 
             // do checks on the pushable, then count as move
-
             while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) &&
                 game_bound_check(new_state, step_loc)) {
                 counter++;
@@ -529,7 +520,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
  * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state.
  *                 returns a list of objects of the form: 
  *                      {obj: <object>, directions: [{direction:<dir>, path: <p>}, ...]}.
- *
  */
 function canPushThese(state, pushes) {
     var outList = [];
@@ -553,7 +543,6 @@ function canPushThese(state, pushes) {
  * @param {array} directions possible diretions to filter OR an empty array.
  * @return {array} directions that the target can be pushed in of those given - or all possible.
  *                 items in this list are key/value pairs of the form {direction: <dir>, path: <path-to-take>}
- *
  */
 function canPush(state, target, directions) {
     var state = copy_state(state);
@@ -581,7 +570,6 @@ function canPush(state, target, directions) {
  * @param {Object} target the object to push.
  * @param {String} direction the direction to push in
  * @return {array} Path to get to a target to push it if found, else the empty list
- *
  */
 function canPushInDirection(state, target, direction) {
     const yous = isYou(state, []);
@@ -748,10 +736,8 @@ function canPushTo(state, target, end_location, path) {
                 }
  
                 // else don't recurse
- 
     */
 }
-
 
 /**
  * @description Filter all of the objects that are NOUN in the current game state.
@@ -759,7 +745,6 @@ function canPushTo(state, target, end_location, path) {
  * @param {State} state the acsii representation of the current game state.
  * @param {array} nouns possible values of NOUN to filter OR an empty array.
  * @return {array} all objects in nouns that are NOUN - or all of them - in the current game state.
- * 
  */
 function isNoun(state, nouns) {
     const word_objs = accessGameState(state, "words");
@@ -780,7 +765,6 @@ function isNoun(state, nouns) {
  * @param {string} state the acsii representation of the current game state.
  * @param {array} connectors possible values of CONNECTOR to filter OR an empty array.
  * @return {array} all objects in connectors that are CONNECTOR - or all of them - in the current game state.
- * 
  */
 function isConnector(state, connectors) {
     const word_objs = accessGameState(state, "words");
@@ -801,7 +785,6 @@ function isConnector(state, connectors) {
  * @param {string} state the acsii representation of the current game state.
  * @param {array} properties possible values of PROPERTY to filter OR an empty array.
  * @return {array} all objects in properties that are PROPERTY - or all of them - in the current game state.
- * 
  */
 function isProperty(state, properties) {
     const word_objs = accessGameState(state, "words");
@@ -815,7 +798,6 @@ function isProperty(state, properties) {
     }
     return properties;
 }
-
 
 module.exports = {
     isYou,
