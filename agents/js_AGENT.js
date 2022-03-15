@@ -10,8 +10,7 @@ let possActions = ["space", "right", "up", "left", "down"];
 // NEXT ITERATION STEP FOR SOLVING
 function iterSolve(init_state) {
   /* Find the winning solution */
-  //let solutionPath = solve_level(init_state);
-  let solutionPath = default_solve(init_state);
+  let solutionPath = solve_level(init_state);
 
   //return a sequence of actions or empty list
   return solutionPath;

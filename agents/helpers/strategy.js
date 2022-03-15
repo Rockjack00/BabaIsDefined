@@ -71,6 +71,9 @@ function solve_level(state) {
   // just return the first one
   if (solutions.length > 0) {
     return solutions[0].path;
+  } else {
+    /* Couldn't find winning path */
+    return default_solve(state)
   }
 
   /* Are any objects that can be made WIN isReachable by any objects that are YOU? */
@@ -90,9 +93,6 @@ function solve_level(state) {
   //       return true;
   //     }
   //   }
-
-  /* Couldn't find winning path */
-  return default_solve(state)
 }
 
 /**
