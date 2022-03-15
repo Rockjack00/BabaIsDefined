@@ -55,6 +55,20 @@
             "author": "Baba",
             "ascii": "__________\n_....R15._\n_BwwwwwwF_\n_1wW16.w1_\n_2w....w3_\n_ww....ww_\n_b.rrr..f_\n_ww....ww_\n_.w....w._\n__________",
             "solution": ""
+        },
+        {
+            "id": 8,
+            "name": "Deactivate a Rule",
+            "author": "Rockjack00",
+            "ascii": "__________\n_........_\n_BwwwwwwF_\n_1w....w1_\n_2wW16.w3_\n_ww....ww_\n_b.....wf_\n_ww....ww_\n_.w....ww_\n__________",
+            "solution": "rruuddrrrrr"
+        },
+        {
+            "id": 9,
+            "name": "Push target then deactivate",
+            "author": "Rockjack00",
+            "ascii": "__________\n_F13.ww.._\n_B12V15.._\n_www..w.._\n_fww..w.._\n_...v.w.._\n_R15w.w.W_\n_wwwwrw.1_\n_b......6_\n__________",
+            "solution": "rrrruuuuluudddlllu"
         }
     ]
 }

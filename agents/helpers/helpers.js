@@ -1,4 +1,6 @@
 const simjs = require("../../js/simulation");
+const { isEqual } = require("lodash")
+
 
 // MAKE SURE NOT TO HAVE CIRCULAR DEPENDENCIES
 
@@ -176,35 +178,49 @@ function static(state, target) {
     return true;
   }
 
-  let target_neighbors = neighbors(state, target);
+  function _static_recur(state, target, ignore_these) {
 
-  // is there a static neighbor in a horizontal direction?
-  function _horizTest(ns) {
+    // get all neighbors that haven't already been checked
+    let target_neighbors = neighbors(state, target).filter((n) => {
+      return !ignore_these.some((ignored) => {
+        return isEqual(n.neighbor, ignored)
+      })
+    });
 
-    // target is touching a vertical edge so it can't be pushed horizontally
-    if (target.y == 1 || target.y == y_bounds - 1) {
-      return true;
+    ignore_these.push(target);
+
+
+    // is there a static neighbor in a horizontal direction?
+    function _horizTest(ns) {
+
+      // target is touching a vertical edge so it can't be pushed horizontally
+      if (target.x == 1 || target.x == x_bounds - 1) {
+        return true;
+      }
+      return ns.some((n) => {
+
+        return n.direction == "left" || n.direction == "right" ? _static_recur(state, n.neighbor, ignore_these) : false
+      })
     }
-    return ns.some((n) => {
-      return n.direction == "left" || n.direction == "right" ? static(state, n.neighbor) : false
-    })
+
+    // is there a static neighbor in a vertical direction?
+    function _vertTest(ns) {
+
+      // target is touching a horizontal edge so it can't be pushed vertically
+      if (target.y == 1 || target.y == y_bounds - 1) {
+        return true;
+      }
+      return ns.some((n) => {
+        return n.direction == "up" || n.direction == "down" ? _static_recur(state, n.neighbor, ignore_these) : false
+      })
+    }
+
+    return _horizTest(target_neighbors) && _vertTest(target_neighbors);
   }
 
-  // is there a static neighbor in a vertical direction?
-  function _vertTest(ns) {
-
-    // target is touching a horizontal edge so it can't be pushed vertically
-    if (target.x == 1 || target.x == x_bounds - 1) {
-      return true;
-    }
-    return ns.some((n) => {
-      return n.direction == "up" || n.direction == "down" ? static(state, n.neighbor) : false
-    })
-  }
-
-  return _vertTest(target_neighbors) && _horizTest(target_neighbors);
-
+  return _static_recur(state, target, []);
 }
+
 
 /**
  * @description get objects that are neighbors of the target
@@ -256,7 +272,7 @@ function simulate(state, path) {
  * @description check if an object is at the specified location
  * @param {object} object 
  * @param {Position} position 
- * @returns 
+ * @returns {Boolean} true|false if the object is at the specified position
  */
 function atLocation(object, position) {
   return object.x == position.x && object.y == position.y
@@ -268,6 +284,11 @@ function atLocation(object, position) {
  */
 function bounds(state) {
   return [state["obj_map"][0].length - 1, state["obj_map"].length - 1];
+}
+
+// from https://stackoverflow.com/questions/5072136/javascript-filter-for-objects
+function objectFilter(obj, predicate) {
+  return Object.fromEntries(Object.entries(obj).filter(predicate));
 }
 
 module.exports = {
@@ -282,5 +303,6 @@ module.exports = {
   neighbors,
   simulate,
   bounds,
-  atLocation
+  atLocation,
+  objectFilter
 };

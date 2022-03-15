@@ -1,6 +1,6 @@
 const { isYou, isWin, isReachable, isNoun } = require("./predicates");
 const simjs = require("../../js/simulation");
-const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, activeRules, getRules } = require("./rules");
+const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, canDeactivateRules, activeRules, getRules } = require("./rules");
 const { makeSeq } = require("../random_AGENT");
 const { validSolution } = require("../../js/exec");
 
@@ -18,6 +18,9 @@ function solve_level(state) {
   var yous = isYou(state, []);
 
   /// DEBUG ///
+
+  let deactivate_rules = canDeactivateRules(state, []);
+  console.log(deactivate_rules)
 
   let changeable_Rules = canChangeRules(state, []);
   console.log(changeable_Rules);
