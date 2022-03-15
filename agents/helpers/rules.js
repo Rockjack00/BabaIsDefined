@@ -188,6 +188,8 @@ function canActivateRules(state, rules) {
       let nextState = state;
       let nextPath = [];
 
+      // TODO: get all permutations of these orders (NOUN,CONN,PROP), (NOUN,PROP, CONN), (PROP,NOUN,CONN), ...
+
       // Get the noun in place
       if (!atLocation(rule.noun, loc[0])) {
         nextPath = canPushTo(nextState, rule.noun, loc[0], []);
