@@ -54,7 +54,7 @@ function solve_level(state) {
   // just return the first one
   if (solutions.length > 0) {
     return solutions[0].path;
-  } 
+  }
 
   /* Are any objects that can be made WIN isReachable by any objects that are YOU? */
   // TODO
@@ -74,47 +74,54 @@ function solve_level(state) {
   //     }
   //   }
 
+  // Are there any solutions that just require the agent to make a "win" rule?
+  // assert win returns a list of rules that can be made and the path to make them
+  for (assertable in assertWin(state, [])) {
 
-    //assert win returns a list of rules that can be made and the path to make them
-    for (assertable in assertWin(state, [])) {
-   
-        var new_state = simulate(state, assertable.path);
-        var new_yous = isYou(new_state, []);
-        var new_wins = isWin(new_state, []);
-        var paths = getPaths(new_state, new_yous, new_wins);
+    var new_state = simulate(state, assertable.path);
+    var new_yous = isYou(new_state, []);
+    var new_wins = isWin(new_state, []);
+    var paths = getPaths(new_state, new_yous, new_wins);
 
-        if (paths.length > 0) {
-            var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
-            if (EAGER) {
-                return full_path;
-            }
-            solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path})
-        }
+    if (paths.length > 0) {
+      var full_path = assertable.path.concat(paths[0].path); // concat assertable.path and paths[0].path
+      if (EAGER) {
+        return full_path;
+      }
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
     }
-    if (solutions.length > 0) {
-        return solutions[0].path;
-    } 
+  }
+  if (solutions.length > 0) {
+    return solutions[0].path;
+  }
 
-    for (assertable in createWin(state, [])) {
-        var new_state = simulate(state, assertable.path);
-        var new_yous = isYou(new_state, []);
-        var new_wins = isWin(new_state, []);
-        var paths = getPaths(new_state, new_yous, new_wins);
+  // Are there any solutions that just require the agent to change one object into another object type that is already "win"?
+  for (assertable in createWin(state, [])) {
+    var new_state = simulate(state, assertable.path);
+    var new_yous = isYou(new_state, []);
+    var new_wins = isWin(new_state, []);
+    var paths = getPaths(new_state, new_yous, new_wins);
 
-        if (paths.length > 0) {
-            var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
-            if (EAGER) {
-                return full_path;
-            }
-            solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
-        }
+    if (paths.length > 0) {
+      var full_path = assertable.path.concat(paths[0].path); // concat assertable.path and paths[0].path
+      if (EAGER) {
+        return full_path;
+      }
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
     }
-    if (solutions.length > 0) {
-        return solutions[0].path;
-    } 
+  }
+  if (solutions.length > 0) {
+    return solutions[0].path;
+  }
 
-    /* Couldn't find winning path */
-    return default_solve(state);
+  // Are there solutions that can be found by changing any of the rules?
+  solutions = changeableRulesSolve(state)
+  if (solutions.length > 0) {
+    return solutions[0].path
+  }
+
+  // Couldn't find winning path
+  return defaultSolve(state);
 }
 
 /**
@@ -122,53 +129,28 @@ function solve_level(state) {
  * @param {string} state the acsii representation of the current game state.
  * @param {array} yous an array of the objects trying to reach an item in the second array of objects.
  * @param {array} wins an array of objects we are trying to reach.
- * @return {array} a set of paths.
+ * @return {array} a set of winning paths.
  */
-function getPaths(state, yous, wins)
-{
-    // find all the isReachable paths from to yous and wins
-    var solutions = [];
-    for (let y of yous) {
-        for (let w of wins) {
-            p = isReachable(state, y, w, []);
+function getPaths(state, yous, wins) {
+  // find all the isReachable paths from to yous and wins
+  var solutions = [];
+  for (let y of yous) {
+    for (let w of wins) {
+      p = isReachable(state, y, w, []);
 
-            if (p.length > 0) {
-                console.log(
-                    `\t{ ${y.name} } can reach { ${w.name
-                    } } by taking the path { ${simjs.miniSol(p)} }.`
-                );
-                solutions.push({ you: y, win: w, path: p });
-                if (EAGER) {
-                    return solutions;
-                }
-            }
+      if (p.length > 0) {
+        console.log(
+          `\t{ ${y.name} } can reach { ${w.name
+          } } by taking the path { ${simjs.miniSol(p)} }.`
+        );
+        solutions.push({ you: y, win: w, path: p });
+        if (EAGER) {
+          return solutions;
         }
-    }
-    return solutions;
-}
-
-/**
- * @description Employs a default (random) solver if no path can be found by the intelligent solver.
- *              The goal is either to find a winning path, or to find a new state that can be handed to the intelligent solver.
- * @param {string} state the acsii representation of the current game state.
- * @returns {array} a winning path OR calls solve_level again with the updated state.
- */
-function default_solve(state) {
-  console.log("Could not find winning path.\n Default behavior: attempting random steps.")
-  var path = makeSeq()
-  if (path.length == 0) {
-    console.log("Unable to solve this level.")
-    return []
-  } else if (validSolution(path, simjs.showState(state))) {
-    return path
-  } else { // path to new state
-    for (let i = 0; i < path.length; i++) {
-      // iterate over game state
-      let res = simjs.nextMove(path[i], state);
-      state = res['next_state'];
+      }
     }
   }
-  return solve_level(state) // try to solve level with new state
+  return solutions;
 }
 
 /**
@@ -227,4 +209,79 @@ function createWin(state, subject_nouns) {
   return canActivateRules(state, possible_rules);
 }
 
-module.exports = { solve_level, default_solve };
+/**
+ * @description Finds all winning paths that can be found by changing any of the changeable rules in the game.
+ * @param {string} state the acsii representation of the current game state.
+ * @return {array} a set of winning paths.
+ */
+function changeableRulesSolve(state) {
+  var solutions = []
+  // Can be replaced with one call to canChangeRules, but may be better to leave separated for now to debug
+  solutions.concat(singleRuleChangeSolve(state, canDeactivateRules(state, [])))
+  solutions.concat(singleRuleChangeSolve(state, canActivateRules(state, [])))
+  // TODO: change more than one rule at once
+  return solutions
+}
+
+/**
+ * @description Finds all winning paths that can be found by changing any of the deactivatable rules in the game.
+ * @param {string} state the acsii representation of the current game state.
+ * @return {array} a set of winning paths.
+ */
+function singleRuleChangeSolve(state, rules) {
+  solutions = []
+  // There are no deactivatable rules
+  if (rules.length == 0) {
+    return []
+  }
+
+  // See if any single rule changed to produce a winning path
+  newState = new_state(state)
+  for (rule of rules) {
+    // Change rule and get the new state
+    let path = rule.path
+    let newState = simulate(newState, path)
+
+    // Find if there is a solution now after changing the rule
+    var yous = isYou(newState, []);
+    var wins = isWin(newState, []);
+    var paths = getPaths(newState, yous, wins)
+    if (paths.length > 0) {
+      var full_path = path.concat(paths[0].path);
+      if (EAGER) {
+        return full_path;
+      }
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
+    }
+
+    // Remember to reset the state to the original
+    newState = new_state(state)
+  }
+  return solutions
+}
+
+/**
+ * @description Employs a default (random) solver if no path can be found by the intelligent solver.
+ *              The goal is either to find a winning path, or to find a new state that can be handed to the intelligent solver.
+ * @param {string} state the acsii representation of the current game state.
+ * @returns {array} a winning path OR calls solve_level again with the updated state.
+ */
+function defaultSolve(state) {
+  console.log("Could not find winning path.\n Default behavior: attempting random steps.")
+  var path = makeSeq()
+  if (path.length == 0) {
+    console.log("Unable to solve this level.")
+    return []
+  } else if (validSolution(path, simjs.showState(state))) {
+    return path
+  } else { // path to new state
+    for (let i = 0; i < path.length; i++) {
+      // iterate over game state
+      let res = simjs.nextMove(path[i], state);
+      state = res['next_state'];
+    }
+  }
+  return solve_level(state) // try to solve level with new state
+}
+
+module.exports = { solve_level };
