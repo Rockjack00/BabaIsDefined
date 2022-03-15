@@ -1,38 +1,10 @@
 {
     "levels": [
         {
-            "id": 7,
-            "name": "Test single rule change",
-            "author": "Rockjack00",
-            "ascii": "__________\n_B.b..13._\n_1......._\n_2......._\n_....F..._\n_........_\n_........_\n_..f....._\n_........_\n__________",
-            "solution": ""
-        },
-        {
-            "id": 0,
-            "name": "test Win is You",
-            "author": "Baba",
-            "ascii": "__________\n_B13....._\n_1......._\n_2......._\n_...bf..._\n_........_\n_........_\n_........_\n_.....F12_\n__________",
-            "solution": "r"
-        },
-        {
-            "id": 1,
-            "name": "Test right 5x",
-            "author": "",
-            "ascii": "__________\n_B12..F13_\n_........_\n_........_\n_........_\n_.b....f._\n_........_\n_........_\n_........_\n__________",
-            "solution": "rrrrr"
-        },
-        {
-            "id": 2,
-            "name": "Test odd path",
-            "author": "Baba",
-            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..._\n_..w...w._\n_...wwww._\n_........_\n_W16....._\n__________",
-            "solution": "uurrrrrrddlldllu"
-        },
-        {
-            "id": 3,
-            "name": "Test pushable object",
+            "id": 5,
+            "name": "Test multiple pushables in the way",
             "author": "Rockjack00 + PCG.js",
-            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..r_\n_..w...w._\n_...wwww._\n_........_\n_W16..R15_\n__________",
+            "ascii": "________________\n_B12........F13_\n_.............._\n_..wwwwwwwwwww._\n_.bw....w.r..w._\n_..w..w...w.fw._\n_..wrrwwwwwwww._\n_.............._\n_W16.....R15..._\n________________",
             "solution": ""
         },
         {
@@ -43,10 +15,10 @@
             "solution": "dddrruururrdrrurrrd"
         },
         {
-            "id": 5,
-            "name": "Test multiple pushables in the way",
+            "id": 3,
+            "name": "Test pushable object",
             "author": "Rockjack00 + PCG.js",
-            "ascii": "________________\n_B12........F13_\n_.............._\n_..wwwwwwwwwww._\n_.bw....w.r..w._\n_..w..w...w.fw._\n_..wrrwwwwwwww._\n_.............._\n_W16.....R15..._\n________________",
+            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..r_\n_..w...w._\n_...wwww._\n_........_\n_W16..R15_\n__________",
             "solution": ""
         },
         {
@@ -55,20 +27,6 @@
             "author": "Baba",
             "ascii": "__________\n_....R15._\n_BwwwwwwF_\n_1wW16.w1_\n_2w....w3_\n_ww....ww_\n_b.rrr..f_\n_ww....ww_\n_.w....w._\n__________",
             "solution": ""
-        },
-        {
-            "id": 8,
-            "name": "Deactivate a Rule",
-            "author": "Rockjack00",
-            "ascii": "__________\n_........_\n_BwwwwwwF_\n_1w....w1_\n_2wW16.w3_\n_ww....ww_\n_b.....wf_\n_ww....ww_\n_.w....ww_\n__________",
-            "solution": "rruuddrrrrr"
-        },
-        {
-            "id": 9,
-            "name": "Push target then deactivate",
-            "author": "Rockjack00",
-            "ascii": "__________\n_F13.ww.._\n_B12V15.._\n_www..w.._\n_fww..w.._\n_...v.w.._\n_R15w.w.W_\n_wwwwrw.1_\n_b......6_\n__________",
-            "solution": "rrrruuuuluudddlllu"
         }
     ]
 }

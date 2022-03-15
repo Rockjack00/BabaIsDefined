@@ -51,6 +51,9 @@ class Position {
 
       case "down":
         return this.get_dn();
+
+      case "space":
+        return new Position(this.x, this.y);
     }
     return null;
   }
@@ -80,38 +83,38 @@ function add_to_dict(phys_objs, dictionary) {
 // Both DEEPCOPY code blocks from default_AGENT.js, by Milk 
 // COPIES ANYTHING NOT AN OBJECT
 // DEEP COPY CODE FROM HTTPS://MEDIUM.COM/@ZIYOSHAMS/DEEP-COPYING-JAVASCRIPT-ARRAYS-4D5FC45A6E3E
-function deepCopy(arr) {
-  let copy = [];
-  arr.forEach(elem => {
-    if (Array.isArray(elem)) {
-      copy.push(deepCopy(elem))
-    } else {
-      if (typeof elem === 'object') {
-        copy.push(deepCopyObject(elem))
-      } else {
-        copy.push(elem)
-      }
-    }
-  })
-  return copy;
-}
+// function deepCopy(arr) {
+//   let copy = [];
+//   arr.forEach(elem => {
+//     if (Array.isArray(elem)) {
+//       copy.push(deepCopy(elem))
+//     } else {
+//       if (typeof elem === 'object') {
+//         copy.push(deepCopyObject(elem))
+//       } else {
+//         copy.push(elem)
+//       }
+//     }
+//   })
+//   return copy;
+// }
 
 // DEEP COPY AN OBJECT
-function deepCopyObject(obj) {
-  let tempObj = {};
-  for (let [key, value] of Object.entries(obj)) {
-    if (Array.isArray(value)) {
-      tempObj[key] = deepCopy(value);
-    } else {
-      if (typeof value === 'object') {
-        tempObj[key] = deepCopyObject(value);
-      } else {
-        tempObj[key] = value
-      }
-    }
-  }
-  return tempObj;
-}
+// function deepCopyObject(obj) {
+//   let tempObj = {};
+//   for (let [key, value] of Object.entries(obj)) {
+//     if (Array.isArray(value)) {
+//       tempObj[key] = deepCopy(value);
+//     } else {
+//       if (typeof value === 'object') {
+//         tempObj[key] = deepCopyObject(value);
+//       } else {
+//         tempObj[key] = value
+//       }
+//     }
+//   }
+//   return tempObj;
+// }
 
 /**
  * @description Makes a duplicate of the state. To avoid pass by reference issues
@@ -121,42 +124,97 @@ function copy_state(state) {
 }
 
 /**
+ * @description returns the location to be pushed from as Position object
+ * @param {Position} position Position object of pushable.
+ * @param {string} direction direction pushable will be pushed.
+ */
+function pushing_side(position, direction) {
+  side_of_push = null;
+  switch (direction) {
+    case "right":
+      side_of_push = position.get_left();
+      break;
+    case "up":
+      side_of_push = position.get_dn();
+      break;
+    case "left":
+      side_of_push = position.get_right();
+      break;
+    case "down":
+      side_of_push = position.get_up();
+      break;
+  }
+  return side_of_push;
+}
+
+/**
  * @description: Example: [a,b,c] => [[a],[b],[c],[a,b],[a,c],[b,c]]
  */
 function permutations_of_list(start_list) {
-  if (start_list.length < 2) {
-    return [start_list];
-  }
-  if (start_list.length == 2) {
-    list_a = [[start_list[0]]];
-    list_a.push([start_list[1]])
-    list_a.push(deepCopy(start_list));
-    return list_a;
-  }
+  // remove duplicates
+  start_list = start_list.filter((pos, index) => {
+    const str_pos = pos.get_string();
+    return index === start_list.findIndex(obj => {
+      return obj.get_string() === str_pos;
+    });
+  });
 
-  perms = [];
-  index = 0;
-  temp_list = [];
-  for (item of start_list) {
-    temp_list.push(item);
-  }
-  perms.concat(temp_list);
-  index++;
-
-  while (index < start_list.length) {
-    prev_list = deepCopy(temp_list);
-    temp_list = []
-    for (let i = 0; i < prev_list.length - 1; i++) {
-      for (let j = i + 1; j < start_list.length; j++) {
-        temp_list.push(prev_list[i].push(start_list[j]));
+  // get all combinations
+  outer_list = []
+  bin_num = 2 ** start_list.length;
+  for (let mask = 1; mask < bin_num; mask++) {
+    inner_list = [];
+    for (let j = 0; j < start_list.length; j++) {
+      index_bin = 2 ** j;
+      if ((index_bin & mask) != 0) { // example: Mask is 0110; 0100 index,  is true. ; 1000 index is false
+        inner_list.push(start_list[j]);
       }
     }
-    perms.concat(temp_list);
+    if (inner_list.length != 0) {
+      outer_list.push(inner_list);
+    }
   }
+  return outer_list;
 
-  perms.push(start_list);
 
-  return perms;
+  // if (start_list.length < 2) {
+  //   return [start_list];
+  // }
+  // if (start_list.length == 2) {
+  //   list_a = [[start_list[0]]];
+  //   list_a.push([start_list[1]]);
+  //   list_a.push([start_list[0], start_list[1]]);
+  //   return list_a;
+  // }
+
+  // let perms = [];
+  // let index = 0;
+  // let temp_list = [];
+  // for (item of start_list) {
+  //   perms.push([item]);
+  // }
+  // // perms.concat(temp_list);
+  // index++;
+
+  // while (index < start_list.length) {
+  //   prev_list = [];
+  //   for (item of start_list) {
+  //     prev_list.push([item]);
+  //   }
+
+  //   temp_list = []
+  //   for (let i = 0; i < prev_list.length - 1; i++) {
+  //     for (let j = i + 1; j < start_list.length; j++) {
+  //       temp_list.push(prev_list[i].concat(start_list[j]));
+  //     }
+  //   }
+  //   perms = perms.concat(temp_list);
+  //   index++;
+  // }
+
+  // perms.push(start_list);
+
+  // return perms;
 }
 
 /**
@@ -269,6 +327,20 @@ function simulate(state, path) {
 }
 
 /**
+ * @description Simulate the path based on the current path and return the end location
+ * @param {State} start_loc the starting location
+ * @param {Array} path the list of steps to step the simulation through
+ * @returns {Position}
+ */
+function simulate_pos(start_loc, path) {
+  last_loc = new Position(start_loc.x, start_loc.y);
+  for (move of path) {
+    last_loc = last_loc.get_dir(move);
+  }
+  return last_loc;
+}
+
+/**
  * @description check if an object is at the specified location
  * @param {object} object 
  * @param {Position} position 
@@ -291,10 +363,16 @@ function objectFilter(obj, predicate) {
   return Object.fromEntries(Object.entries(obj).filter(predicate));
 }
 
+function state_equality(prev_state, cur_state) {
+  prev = simjs.showState(prev_state)
+  cur = simjs.showState(cur_state);
+  return prev == cur;
+}
+
+
+
 module.exports = {
   accessGameState,
-  deepCopy,
-  deepCopyObject,
   copy_state,
   add_to_dict,
   Position,
@@ -304,5 +382,8 @@ module.exports = {
   simulate,
   bounds,
   atLocation,
-  objectFilter
+  objectFilter,
+  pushing_side,
+  state_equality,
+  simulate_pos
 };
