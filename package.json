@@ -3,6 +3,7 @@
     "express": "^4.17.2",
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
+    "lodash": "^4.17.21",
     "socket.io": "^4.4.1",
     "tau-prolog": "^0.3.2"
   },

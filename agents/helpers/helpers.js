@@ -168,6 +168,7 @@ function permutations_of_list(start_list) {
 function static(state, target) {
   const [x_bounds, y_bounds] = bounds(state);
 
+  // Is the target position an edge?
   if (
     target.x == 0 ||
     target.y == 0 ||
@@ -179,17 +180,39 @@ function static(state, target) {
 
   let target_neighbors = neighbors(state, target);
 
-  return (("up" in target_neighbors && static(state, target_neighbors.up)) ||
-    ("down" in target_neighbors && static(state, target_neighbors.down))) &&
-    (("left" in target_neighbors && static(state, target_neighbors.left)) ||
-      ("right" in target_neighbors && static(state, target_neighbors.up)))
+  // is there a static neighbor in a horizontal direction?
+  function _horizTest(ns) {
+
+    // target is touching a vertical edge so it can't be pushed horizontally
+    if (target.y == 1 || target.y == y_bounds - 1) {
+      return true;
+    }
+    return ns.some((n) => {
+      return n.direction == "left" || n.direction == "right" ? static(state, n.neighbor) : false
+    })
+  }
+
+  // is there a static neighbor in a vertical direction?
+  function _vertTest(ns) {
+
+    // target is touching a horizontal edge so it can't be pushed vertically
+    if (target.x == 1 || target.x == x_bounds - 1) {
+      return true;
+    }
+    return ns.some((n) => {
+      return n.direction == "up" || n.direction == "down" ? static(state, n.neighbor) : false
+    })
+  }
+
+  return _vertTest(target_neighbors) && _horizTest(target_neighbors);
+
 }
 
 /**
  * @description get objects that are neighbors of the target
  * @param {State} state the current game state
  * @param {Object} target an object or Position
- * @returns {Object} An object of the form {direction: neighbor} containing all of the neighbors of target.
+ * @returns {Array} A list of objects of the form {direction: <dir>, neighbor: <n>} containing all of the neighbors of target.
  */
 function neighbors(state, target) {
   // make dictionary of all phys_objs and words in state. 
@@ -197,18 +220,18 @@ function neighbors(state, target) {
   board_objs = add_to_dict(state["words"], board_objs);
 
   //make target a Postition, then get up, down, left, and right neighbors as objs
-  let out = {};
+  let outList = [];
   const target_pos = new Position(target.x, target.y);
 
   for (let dir of ["right", "left", "up", "down"]) {
     let temp_pos = target_pos.get_dir(dir);
     let neighbor = board_objs[temp_pos.get_string()];
     if (neighbor != null) {
-      out = { ...out, dir: neighbor };
+      outList.push({ "direction": dir, "neighbor": neighbor });
     }
   }
 
-  return out;
+  return outList;
 }
 
 /**
@@ -260,6 +283,7 @@ module.exports = {
   Position,
   permutations_of_list,
   static,
+  neighbors,
   simulate,
   bounds,
   atLocation
