@@ -1,7 +1,8 @@
 const { isYou, isWin, isReachable, isNoun } = require("./predicates");
-const simjs = require("../../js/simulation");
 const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, canDeactivateRules, activeRules, getRules } = require("./rules");
+const { simulate } = require("./helpers");
 const { makeSeq } = require("../random_AGENT");
+const simjs = require("../../js/simulation");
 const { validSolution } = require("../../js/exec");
 
 // Optionally do eager evaluation (depth first)
@@ -48,33 +49,12 @@ function solve_level(state) {
   var wins = isWin(state, []);
 
   /* Are any objects that are WIN isReachable by any objects that are YOU? */
-
-  // find all the isReachable paths from to yous and wins
-  solutions = [];
-  for (let y of yous) {
-    for (let w of wins) {
-      p = isReachable(state, y, w, []);
-
-      if (p.length > 0) {
-        console.log(
-          `\t{ ${y.name} } can reach { ${w.name
-          } } by taking the path { ${simjs.miniSol(p)} }.`
-        );
-        if (EAGER) {
-          return p;
-        }
-        solutions.push({ you: y, win: w, path: p });
-      }
-    }
-  }
+  var solutions = getPaths(state, yous, wins);
 
   // just return the first one
   if (solutions.length > 0) {
     return solutions[0].path;
-  } else {
-    /* Couldn't find winning path */
-    return default_solve(state)
-  }
+  } 
 
   /* Are any objects that can be made WIN isReachable by any objects that are YOU? */
   // TODO
@@ -93,6 +73,78 @@ function solve_level(state) {
   //       return true;
   //     }
   //   }
+
+
+    //assert win returns a list of rules that can be made and the path to make them
+    for (assertable in assertWin(state, [])) {
+   
+        var new_state = simulate(state, assertable.path);
+        var new_yous = isYou(new_state, []);
+        var new_wins = isWin(new_state, []);
+        var paths = getPaths(new_state, new_yous, new_wins);
+
+        if (paths.length > 0) {
+            var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
+            if (EAGER) {
+                return full_path;
+            }
+            solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path})
+        }
+    }
+    if (solutions.length > 0) {
+        return solutions[0].path;
+    } 
+
+    for (assertable in createWin(state, [])) {
+        var new_state = simulate(state, assertable.path);
+        var new_yous = isYou(new_state, []);
+        var new_wins = isWin(new_state, []);
+        var paths = getPaths(new_state, new_yous, new_wins);
+
+        if (paths.length > 0) {
+            var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
+            if (EAGER) {
+                return full_path;
+            }
+            solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
+        }
+    }
+    if (solutions.length > 0) {
+        return solutions[0].path;
+    } 
+
+    /* Couldn't find winning path */
+    return default_solve(state);
+}
+
+/**
+ * @description Find a path between objects given a game state and 2 sets of objects.
+ * @param {string} state the acsii representation of the current game state.
+ * @param {array} yous an array of the objects trying to reach an item in the second array of objects.
+ * @param {array} wins an array of objects we are trying to reach.
+ * @return {array} a set of paths.
+ */
+function getPaths(state, yous, wins)
+{
+    // find all the isReachable paths from to yous and wins
+    var solutions = [];
+    for (let y of yous) {
+        for (let w of wins) {
+            p = isReachable(state, y, w, []);
+
+            if (p.length > 0) {
+                console.log(
+                    `\t{ ${y.name} } can reach { ${w.name
+                    } } by taking the path { ${simjs.miniSol(p)} }.`
+                );
+                solutions.push({ you: y, win: w, path: p });
+                if (EAGER) {
+                    return solutions;
+                }
+            }
+        }
+    }
+    return solutions;
 }
 
 /**
