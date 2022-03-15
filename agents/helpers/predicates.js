@@ -1,4 +1,4 @@
-const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static, simulate } = require("./helpers");
+const { accessGameState, deepCopy, deepCopyObject, copy_state, Position, add_to_dict, permutations_of_list, static, neighbors, simulate } = require("./helpers");
 const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push, a_star_pushing } = require("./pathing");
 
 const simjs = require("../../js/simulation");
@@ -558,6 +558,32 @@ function canPushThese(state, pushes) {
 function canPush(state, target, directions) {
     var state = copy_state(state);
     var outList = [];
+
+
+    // check all directions if unspecified
+    if (directions.length < 1) {
+        directions = ["up", "down", "right", "left"];
+    }
+
+    for (let c of directions) {
+        let reachablePath = canPushInDirection(state, target, c);
+        if (reachablePath.length > 0) {
+            outList.push({ "direction": c, "path": reachablePath });
+        }
+    }
+
+    return outList;
+}
+
+/**
+ * @description Get the path to push a target in a direction
+ * @param {State} state the current game state.
+ * @param {Object} target the object to push.
+ * @param {String} direction the direction to push in
+ * @return {array} Path to get to a target to push it if found, else the empty list
+ *
+ */
+function canPushInDirection(state, target, direction) {
     const yous = isYou(state, []);
 
     if (isPush(state, target).length < 1) {
@@ -570,89 +596,63 @@ function canPush(state, target, directions) {
         return [];
     }
 
-    // check all directions if unspecified
-    if (directions.length < 1) {
-        directions = ["up", "down", "right", "left"];
+    let pushTarget;
+
+    // get the starting location for this push
+    switch (direction) {
+        case "up":
+            pushTarget = new Position(target.x, target.y + 1); // start one below
+            break;
+        case "down":
+            pushTarget = new Position(target.x, target.y - 1); // start one above
+            break;
+        case "left":
+            pushTarget = new Position(target.x + 1, target.y); // start one to the right
+            break;
+        case "right":
+            pushTarget = new Position(target.x - 1, target.y); // start one to the left
+            break;
+        default:
+            console.error(`Cannot read direction "${direction}"`);
     }
 
-    for (let c of directions) {
-        let pushTarget;
+    // ignoring side effects, greedily see if any YOU object can push the target
+    for (let you of yous) {
 
-        // get the starting location for this push
-        switch (c) {
-            case "up":
-                pushTarget = { x: target.x, y: target.y + 1 }; // start one below
-                break;
-            case "down":
-                pushTarget = { x: target.x, y: target.y - 1 }; // start one above
-                break;
+        // first check if the pushTarget is reachable
+        let [reachablePath, _] = a_star_avoid_push(state, new Position(you.x, you.y), pushTarget);
 
-            case "left":
-                pushTarget = { x: target.x + 1, y: target.y }; // start one to the right
-                break;
+        // if not, recursively check if any object in the way can be pushed in the target direction
+        if (reachablePath.length == 0) {
+            let pushableNeighbors = neighbors(state, target).filter((n) => {
+                return n.direction == direction;
+            })
 
-            case "right":
-                pushTarget = { x: target.x - 1, y: target.y - 1 }; // start one to the left
-                break;
-
-            default:
-                console.error(`Cannot read direction "${c}"`);
+            if (pushableNeighbors.length > 0) {
+                reachablePath = canPushInDirection(state, pushableNeighbors[0], direction);
+            }
         }
 
-        // ignoring side effects, greedily see if any YOU object can push the target
+        // check that the prediction was actually possible in the simulator
+        if (reachablePath.length > 0) {
+            // see if it moves in the game state at that direction
+            let pushState = simulate(state, reachablePath)
 
-        for (let you of yous) {
-            // let reachablePath = isReachable(state, you, pushTarget, []);
-
-            // get the starting location for this push
-            switch (c) {
-                case "up":
-                    pushTarget = new Position(target.x, target.y + 1); // start one below
-                    break;
-                case "down":
-                    pushTarget = new Position(target.x, target.y - 1); // start one above
-                    break;
-
-                case "left":
-                    pushTarget = new Position(target.x + 1, target.y); // start one to the right
-                    break;
-
-                case "right":
-                    pushTarget = new Position(target.x - 1, target.y); // start one to the left
-                    break;
-
-                default:
-                    console.error(`Cannot read direction "${c}"`);
-            }
-
-            // ignoring side effects, greedily see if any YOU object can push the target
-
-            for (let you of yous) {
-                you_pos = new Position(you.x, you.y);
-                let [reachablePath, locs] = a_star_avoid_push(state, you_pos, pushTarget);
-
-                // check that the direction is reachable
-                if (reachablePath.length > 0) {
-                    // see if it moves in the game state at that direction
-                    // TODO: change this to simjs.newState() - its probably a lot faster
-                    let pushState = simulate(state, reachablePath)
-                    // did the state change?
-                    // TODO: we may need to do this a different way when levels become more complex
-                    //       maybe could check if a "you" object made it into the target location or something
-
-                    if (
-                        simjs.showState(pushState) !==
-                        simjs.showState(simjs.nextMove(c, pushState)["next_state"])
-                    ) {
-                        outList.push({ "direction": c, "path": reachablePath });
-                        break;
-                    }
-                }
+            // did the state change?
+            // TODO: we may need to do this a different way when levels become more complex
+            //       maybe could check if a "you" object made it into the target location or something
+            if (
+                simjs.showState(pushState) !==
+                simjs.showState(simjs.nextMove(direction, pushState)["next_state"])
+            ) {
+                // eagerly return the first reachable path
+                return reachablePath;
             }
         }
     }
 
-    return outList;
+    // Path wasn't found
+    return [];
 }
 
 /**
@@ -719,16 +719,16 @@ function canPushTo(state, target, end_location, path) {
     if (path.length > 0) {
         // simulate the path and see if it ends up in the right spot
     }
-
+ 
         let pushed = target;
-
+ 
         TODO: push_a_star(state, target, location) :  (yo mama's so fat she can push a star) 
             A* where at every move, the pusher has to be able to path to the opposite direction of travel of the pushed object
             
             Use A* with the target, but at every node update the pusher path instead:
                 
                 let pusher_path = parent_node.pusher_path; // grab the path to the last node
-
+ 
                 step =               // the direction at this node
                 currState =          // state at this step
                 pushed_target =      // the target that now has a new location
@@ -737,18 +737,18 @@ function canPushTo(state, target, end_location, path) {
                 let direction = pushableDirs.find((choice) =>{
                     return choice.direction == step
                 })
-
+ 
                 // if it's not empty add the path at this node
                 if (direction) {
-
+ 
                     //concat onto the parent node's path
                     node.pusher_path.concat(direction.path)
-
+ 
                     // recurse
                 }
-
+ 
                 // else don't recurse
-
+ 
     */
 }
 
