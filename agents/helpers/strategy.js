@@ -20,11 +20,11 @@ function solve_level(state) {
 
   /// DEBUG ///
 
-  let deactivate_rules = canDeactivateRules(state, []);
-  console.log(deactivate_rules)
+  // let deactivate_rules = canDeactivateRules(state, []);
+  // console.log(deactivate_rules)
 
-  let changeable_Rules = canChangeRules(state, []);
-  console.log(changeable_Rules);
+  // let changeable_Rules = canChangeRules(state, []);
+  // console.log(changeable_Rules);
 
   /// END DEBUG ///
 

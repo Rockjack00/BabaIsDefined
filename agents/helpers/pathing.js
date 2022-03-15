@@ -1,5 +1,5 @@
 const { check } = require("prettier");
-const { accessGameState, add_to_dict, Position, bounds } = require("./helpers");
+const { accessGameState, add_to_dict, Position, bounds, pushing_side } = require("./helpers");
 
 // for Reference, this are the position actions
 const possActions = ["space", "right", "up", "left", "down"];
@@ -211,6 +211,11 @@ function a_star_avoid_push(state, start_pos, end_pos) {
 }
 
 function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
+  // first, check that you are not already on the end location.
+  if (end_pos.get_string() == start_pos.get_string()) {
+    return [["space"], [start_pos.get_dir("space")]];
+  }
+
   // only runs for actual moves. Ignores "space" which is "wait"
   range = 4;
 
@@ -259,7 +264,7 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   // const [x_bounds, y_bounds] = bounds(state)
 
   if (pushing) {
-    path_end_node = a_star_pushed_solver(start_pos, end_pos, obstacles)
+    path_end_node = a_star_pushed_solver(state, start_pos, end_pos, obstacles)
   }
   else {
     path_end_node = a_star_solver(start_pos, end_pos, obstacles, move_actions, state, []);
@@ -460,7 +465,7 @@ function get_node(q, dir) {
   throw new Error("ERROR: Expected one of direction 'up', 'down', 'left', or 'right', but got direction " + dir)
 }
 
-function push_turn_check(obstacles, next_node) {
+function push_turn_check(state, next_node) {
   cur_node = next_node.parent
   // can push at beginning is done before getting here
   if (cur_node == null) {
@@ -469,40 +474,20 @@ function push_turn_check(obstacles, next_node) {
 
   next_pos = next_node.get_pos();
   cur_pos = cur_node.get_pos();
-  check_these = []; // will become a list of two spaces
 
-  switch (cur_node.move + next_node.move) {
-    case "right" + "down":
-    case "left" + "down": // spaces above (opposite the following move)
-      check_these = [cur_pos.get_up(), next_pos.get_up()];
-      break;
-    case "right" + "up":
-    case "left" + "up": // spaces below (opposite the following move)
-      check_these = [cur_pos.get_dn(), next_pos.get_dn()];
-      break;
-    case "up" + "left":
-    case "down" + "left": // spaces below (opposite the following move)
-      check_these = [cur_pos.get_right(), next_pos.get_right()];
-      break;
-    case "up" + "right":
-    case "down" + "right": // spaces below (opposite the following move)
-      check_these = [cur_pos.get_left(), next_pos.get_left()];
-      break;
+  // if current move and next move are different, check that you can path from current side to side for the next move.
+  if (next_node.move != cur_node.move) {
+    side_to_push = pushing_side(cur_pos, next_node.move);
+    path_to_side = a_star_avoid_push(state, cur_pos, side_to_push);
+    return path_to_side.length != 0;
   }
-
-  for (pos of check_these) {
-    if (pos.get_string() in obstacles) {
-      return false;
-    }
-  }
-
   return true;
 }
 
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 // this A* is for objects being pushed by YOU. 
 // The key is to make sure that if you turn, YOU can get to the opposite side to push from.
-function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
+function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_move) {
   // A* Search Algorithm
   // 1.  Initialize the open list
   open_list = [];
@@ -545,9 +530,7 @@ function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
       next_space = next_node.get_pos();
       next_str = next_node.get_pos().get_string();
       if (!(next_str in obstacles) &&
-
-        // TODO: Fix Me UwU
-        game_bound_check(state, next_space) && push_turn_check(next_node)) {
+        game_bound_check(state, next_space) && push_turn_check(state, next_node)) {
         successors.push(next_node);
       }
     }
