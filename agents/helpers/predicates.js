@@ -55,6 +55,7 @@ function isReachable(state, start, target, path) {
         var win = false;
         var nextState = state;
         for (let step of path) {
+            //TODO: simulate(state, steps)
             [nextState, win] = simjs.nextMove(step, nextState);
             if (win) {
                 return path;
@@ -76,6 +77,8 @@ function isReachable(state, start, target, path) {
 
         // simulate new path
         let new_state = copy_state(state);
+
+        // TODO: replace with simulate(state, clearing_path)
         new_state = clearing_path.reduce(function (currState, step) {
             return simjs.nextMove(step, currState)["next_state"];
         }, new_state);
