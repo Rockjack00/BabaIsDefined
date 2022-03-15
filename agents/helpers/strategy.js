@@ -1,8 +1,8 @@
 const { isYou, isWin, isReachable, isNoun } = require("./predicates");
 const simjs = require("../../js/simulation");
 const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, activeRules, getRules } = require("./rules");
-
-const { best_sol } = require("../random_AGENT");
+const { makeSeq } = require("../random_AGENT");
+const { validSolution } = require("../../js/exec");
 
 // Optionally do eager evaluation (depth first)
 const EAGER = false;
@@ -100,11 +100,11 @@ function solve_level(state) {
  */
 function default_solve(state) {
   console.log("Could not find winning path.\n Default behavior: attempting random steps.")
-  var path = best_sol()
+  var path = makeSeq()
   if (path.length == 0) {
     console.log("Unable to solve this level.")
     return []
-  } else if (validSolution(path, state)) {
+  } else if (validSolution(path, simjs.showState(state))) {
     return path
   } else { // path to new state
     for (let i = 0; i < path.length; i++) {
@@ -172,4 +172,4 @@ function createWin(state, subject_nouns) {
   return canActivateRules(state, possible_rules);
 }
 
-module.exports = { solve_level };
+module.exports = { solve_level, default_solve };

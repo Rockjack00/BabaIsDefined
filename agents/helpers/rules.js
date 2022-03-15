@@ -50,11 +50,11 @@ function generateRules(state, words, rules) {
  */
 function generatePropertyRules(state, words, rules) {
   if (words.length == 0 && rules.length == 0) { // Generate all possible property rules
-    return getRules(isNoun(state), isConnector(state), isProperty(state))
+    return getRules(isNoun(state, []), isConnector(state, []), isProperty(state, []))
   } else if (words.length > 0 && rules.length == 0) { // Only generate property rules that can be made from words
     return getRules(isNoun(state, words), isConnector(state, words), isProperty(state, words))
   } else if (words.length == 0 && rules.length > 0) { // Filter property rules that can be made from the current state
-    const all_rules = getRules(isNoun(state), isConnector(state), isProperty(state))
+    const all_rules = getRules(isNoun(state, []), isConnector(state, []), isProperty(state, []))
     return rules.filter((r) => all_rules.includes(r))
   }
   return rules
