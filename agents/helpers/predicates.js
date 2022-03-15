@@ -167,8 +167,8 @@ function isMove(state, movers) {
  * @return {array} all objects in pushes that are PUSH - or all of them - in the current game state.
  */
 function isPush(state, pushes) {
-    const pushables = accessGameState(state, "pushables");
-    pushables.concat(accessGameState(state, "words"));
+    let pushables = accessGameState(state, "pushables");
+    pushables = pushables.concat(accessGameState(state, "words"));
 
     if (pushes.length > 0) {
         pushes = pushes.filter((p) => pushables.includes(p));
@@ -617,7 +617,7 @@ function canPushInDirection(state, target, direction) {
             })
 
             if (pushableNeighbors.length > 0) {
-                reachablePath = canPushInDirection(state, pushableNeighbors[0], direction);
+                reachablePath = canPushInDirection(state, pushableNeighbors[0].neighbor, direction);
             }
         }
 
@@ -665,29 +665,32 @@ function canPushTo(state, target, end_location, path) {
         you_pos = new Position(you.x, you.y);
 
         // for each direction, try a path. Always include the first move here, then the path follows. 
-        for (push_dir in p_dirs) {
+        for (let push_dir in p_dirs) {
             // first path to the start. Always opposite of move direction
-            start_loc = null;
-            switch (push_dir) {
-                case "left":
-                    start_loc = target_loc.get_right();
-                    break;
-                case "right":
-                    start_loc = target_loc.get_left();
-                    break;
-                case "up":
-                    start_loc = target_loc.get_dn();
-                    break;
-                case "down":
-                    start_loc = target_loc.get_up();
-                    break;
-            }
-            path_to_side = a_star_avoid_push(state, you_pos, start_loc);
+            let path_to_side = push_dir.path
 
-            // if that fails, continue loop
-            if (path_to_side.length == 0) {
-                continue;
-            }
+            // start_loc = null;
+            // switch (push_dir) {
+            //     case "left":
+            //         start_loc = target_loc.get_right();
+            //         break;
+            //     case "right":
+            //         start_loc = target_loc.get_left();
+            //         break;
+            //     case "up":
+            //         start_loc = target_loc.get_dn();
+            //         break;
+            //     case "down":
+            //         start_loc = target_loc.get_up();
+            //         break;
+            // }
+            // path_to_side = a_star_avoid_push(state, you_pos, start_loc);
+
+            // // if that fails, continue loop
+            // if (path_to_side.length == 0) {
+            //     continue;
+            // }
+
             // path to the end. 
             path_pushing = a_star_pushing(state, target_loc, end_location);
             // if it fails, try the next push direction available
@@ -730,7 +733,7 @@ function canPushTo(state, target, end_location, path) {
                 if (direction) {
  
                     //concat onto the parent node's path
-                    node.pusher_path.concat(direction.path)
+                    node.pusher_path = node.pusher_path.concat(direction.path)
  
                     // recurse
                 }

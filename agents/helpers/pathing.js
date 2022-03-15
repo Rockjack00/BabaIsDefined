@@ -545,6 +545,8 @@ function a_star_pushed_solver(cur_location, end_pos, obstacles, first_move) {
       next_space = next_node.get_pos();
       next_str = next_node.get_pos().get_string();
       if (!(next_str in obstacles) &&
+
+        // TODO: Fix Me UwU
         game_bound_check(state, next_space) && push_turn_check(next_node)) {
         successors.push(next_node);
       }
