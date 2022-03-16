@@ -282,14 +282,10 @@ function defaultSolve(state) {
     return [];
   } else if (validSolution(path, simjs.showState(state))) {
     return path;
-  } else { // path to new state
-    for (let i = 0; i < path.length; i++) {
-      // iterate over game state
-      let res = simjs.nextMove(path[i], state);
-      state = res['next_state'];
-    }
   }
-  return solve_level(state); // try to solve level with new state
+
+  // try to solve level with new randomly started state
+  return path.concat(solve_level(simulate(state, path)));
 }
 
 module.exports = { solve_level };

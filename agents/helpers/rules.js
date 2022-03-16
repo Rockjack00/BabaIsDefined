@@ -319,11 +319,11 @@ function ruleDirection(rule) {
 function generateRuleCandidateLocations(state, rule) {
   const [x_bounds, y_bounds] = bounds(state);
 
-  // get a range from start to end
+  // get a range from start to end (inclusive)
   function* _range(start, end) {
     yield start;
     if (start === end) return;
-    yield* range(start + 1, end);
+    yield* _range(start + 1, end);
   }
 
   let candidates = [];
@@ -331,41 +331,58 @@ function generateRuleCandidateLocations(state, rule) {
   // are any words in rule static?  If so, limit the space to the surrounding area
   if (static(state, rule.noun)) {
     // horizontal
-    candidates.push([new Position(rule.noun.x, rule.noun.y), new Position(rule.noun.x + 1, rule.noun.y), new Position(rule.noun.x + 2, rule.noun.y)]);
+    if (rule.noun.x < x_bounds - 3) {
+      candidates.push([new Position(rule.noun.x, rule.noun.y), new Position(rule.noun.x + 1, rule.noun.y), new Position(rule.noun.x + 2, rule.noun.y)]);
+    }
     // vertical
-    candidates.push([new Position(rule.noun.x, rule.noun.y), new Position(rule.noun.x, rule.noun.y + 1), new Position(rule.noun.x, rule.noun.y + 2)]);
+    if (rule.noun.y < y_bounds - 3) {
+      candidates.push([new Position(rule.noun.x, rule.noun.y), new Position(rule.noun.x, rule.noun.y + 1), new Position(rule.noun.x, rule.noun.y + 2)]);
+    }
+
+    if (candidates.length == 0) {
+      return [];
+    }
+
   }
   if (static(state, rule.connector)) {
     // if the noun is static, just give the remaining possibilities
     if (candidates.length > 0) {
-      if (atLocation(rule.connector, candidates[0][1])) {
-        return [candidates[0]];
-      } else if (atLocation(rule.connector, candidates[1][1])) {
-        return [candidates[1]];
-      }
-      return [];
+      return candidates.filter((c) => { return atLocation(rule.connector, c[1]) });
     }
 
     // horizontal
-    candidates.push([new Position(rule.connector.x - 1, rule.connector.y), new Position(rule.connector.x, rule.connector.y), new Position(rule.connector.x + 1, rule.connector.y)]);
+    if (rule.connector.x < x_bounds - 2 && rule.connector.x > 1) {
+      candidates.push([new Position(rule.connector.x - 1, rule.connector.y), new Position(rule.connector.x, rule.connector.y), new Position(rule.connector.x + 1, rule.connector.y)]);
+    }
     // vertical
-    candidates.push([new Position(rule.connector.x, rule.connector.y - 1), new Position(rule.connector.x, rule.connector.y), new Position(rule.connector.x, rule.connector.y + 1)]);
+    if (rule.connector.y < y_bounds - 2 && rule.connector.y > 1) {
+      candidates.push([new Position(rule.connector.x, rule.connector.y - 1), new Position(rule.connector.x, rule.connector.y), new Position(rule.connector.x, rule.connector.y + 1)]);
+    }
+
+    if (candidates.length == 0) {
+      return [];
+    }
   }
   if (static(state, rule.property)) {
     // if one of the other words is static and this isn't in either possible place, return empty
     if (candidates.length > 0) {
-      if (atLocation(rule.property, candidates[0][2])) {
-        return [candidates[0]];
-      } else if (atLocation(rule.property, candidates[0][2])) {
-        return [candidates[1]];
-      }
-      return [];
+      return candidates.filter((c) => { return atLocation(rule.property, c[2]) });
     }
 
     // horizontal
-    candidates.push([new Position(rule.property.x - 2, rule.property.y), new Position(rule.property.x - 1, rule.property.y), new Position(rule.property.x, rule.property.y)]);
+    if (rule.property.x < x_bounds - 1 && rule.property.x > 2) {
+
+      candidates.push([new Position(rule.property.x - 2, rule.property.y), new Position(rule.property.x - 1, rule.property.y), new Position(rule.property.x, rule.property.y)]);
+    }
     // vertical
-    candidates.push([new Position(rule.property.x, rule.property.y - 2), new Position(rule.property.x, rule.property.y - 1), new Position(rule.property.x, rule.property.y)]);
+    if (rule.property.y < y_bounds - 1 && rule.property.x > 2) {
+
+      candidates.push([new Position(rule.property.x, rule.property.y - 2), new Position(rule.property.x, rule.property.y - 1), new Position(rule.property.x, rule.property.y)]);
+    }
+    if (candidates.length == 0) {
+      return [];
+    }
+
   }
   // if something is static, return the chocies.
   if (candidates.length > 0) {
@@ -377,11 +394,10 @@ function generateRuleCandidateLocations(state, rule) {
     for (let row in _range(1, y_bounds - 1)) {
       let pos = new Position(col, row);
 
-
-
       // get all immovable obstacles that aren't words in this rule
       let obstacles = objectFilter(neighbors(pos), ([_, neighbor]) => {
 
+        // static objects, STOP objects, and edges are returned as obstacles
         if (static(state, neighbor) || isStop(state, [neighbor])) {
           return true;
         }
