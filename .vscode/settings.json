@@ -3,7 +3,7 @@
   "editor.formatOnSave": true,
   "[javascript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features",
-    "prettier.tabWidth": 4
+    "prettier.tabWidth": 2
   },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"

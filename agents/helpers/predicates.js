@@ -56,81 +56,63 @@ function isWin(state, wins) {
  * @returns {Array<String>} a path to the target if it exists, or the empty list if it doesn't.
  */
 function isReachable(state, start, target, path) {
+
+    // path was given to test
     if (path.length > 0) {
-        // step through the path. Check if gets to the target
-        let win = false;
-        let nextState = state;
-        for (let step of path) {
-            //TODO: simulate(state, steps)
-            [nextState, win] = simjs.nextMove(step, nextState);
-            if (win) {
-                return path;
-            }
+        if (simjs.nextMove(path[path.length - 1], simulate(state, path.slice(path.length - 1)))[1]) {
+            return path;
+        } else {
+            return [];
         }
-        return [];
-    } else {
-        // try A* but pushables are obsticals
-        let new_path, path_locations;
-
-        [new_path, path_locations] = a_star_reachable(state, start, target, true, []);
-        if (new_path.length != 0) {
-            return new_path;
-        }
-
-        // try A*, but ignore obstacles. Send this to canClearPath.
-        [new_path, path_locations] = a_star_reachable(state, start, target, false, []);
-        let clearing_path, moved_pushables, last_loc;
-        [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, []);
-
-        //
-
-        // simulate new path
-        // let new_state = copy_state(state);
-        // new_start_pos = simulate_pos(start_pos, clearing_path);
-        let new_state = simulate(state, clearing_path);
-        // if recursive calls were made in canClearPath, clearing path might THE path.
-        // if(){
-        //     return clearing_path;
-        // }
-
-        // retry A* when pushables are obstacles. Use new state
-        let new_astar;
-        [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
-
-        // if it cannot get to the goal after clearing the path, 
-        // try A* and clear path again, but consider the last pushable an obstacle.
-        // retry A*
-        // do this until no pushables are left. Return empty list if this happens.
-        if (new_astar.length == 0) {
-            clearing_path = [];
-            let avoid_these_1 = moved_pushables;
-            let avoid_perms = permutations_of_list(avoid_these_1);
-            for (let avoid_these of avoid_perms) {
-                // while (new_astar.length == 0) {
-                // try A* and clear path again, but consider the last pushable an obstacle.
-                [new_astar, path_locations] = a_star_reachable(state, start, target, false, avoid_these);
-                [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, avoid_these);
-
-                // simulate new path
-                new_state = simulate(new_state, clearing_path);
-
-                // retry A* when pushables are obstacles. Use new state
-                [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
-
-                // avoid_these = avoid_these.concat(moved_pushables);
-
-                // }
-                if (new_astar.length != 0) {
-                    break;
-                }
-            }
-        }
-
-        // concat clear path and new A*
-        let full_path = clearing_path.concat(new_astar);
-
-        return full_path;
     }
+
+    // try A* but pushables are obsticals
+    let [new_path, path_locations] = a_star_reachable(state, start, target, true, []);
+    if (new_path.length != 0) {
+        return new_path;
+    }
+
+    // try A*, but ignore obstacles. Send this to canClearPath.
+    [new_path, path_locations] = a_star_reachable(state, start, target, false, []);
+    let [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, []);
+
+    // simulate new path
+    let new_state = simulate(state, clearing_path);
+
+    // retry A* when pushables are obstacles. Use new state
+    let new_astar;
+    [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
+
+    // if it cannot get to the goal after clearing the path, 
+    // try A* and clear path again, but consider the last pushable an obstacle.
+    // retry A*
+    // do this until no pushables are left. Return empty list if this happens.
+    if (new_astar.length == 0) {
+        clearing_path = [];
+        let avoid_these_1 = moved_pushables;
+        let avoid_perms = permutations_of_list(avoid_these_1);
+        for (let avoid_these of avoid_perms) {
+            // try A* and clear path again, but consider the last pushable an obstacle.
+            [new_astar, path_locations] = a_star_reachable(state, start, target, false, avoid_these);
+            [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, avoid_these);
+
+            // simulate new path
+            new_state = simulate(new_state, clearing_path);
+
+            // retry A* when pushables are obstacles. Use new state
+            [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
+
+            if (new_astar.length != 0) {
+                break;
+            }
+        }
+    }
+
+    // concat clear path and new A*
+    let full_path = clearing_path.concat(new_astar);
+
+    return full_path;
+
 }
 
 /**
@@ -285,7 +267,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     let temp;
     const pushables = accessGameState(state, "pushables");
     // TODO - check if pushables includes words?? Will this be an issue?
-    // push_dict = {};
     let obst_dict = {};
     let temp_push_dict = add_to_dict(pushables, {});
 
@@ -321,8 +302,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     obst_dict = add_to_dict(words, obst_dict);
 
     // make a new_State for use in moving the pushables
-    // temp_str = simjs.showState(state);
-    // new_state = simjs.newState(temp_str);
     let new_state = copy_state(state);
 
     // set the last location as the start_bj location
@@ -359,17 +338,14 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
             }
 
             let chosen_dir = null;
+            let step_loc = path_locs[i];
+
             for (let pos_dir of pos_dirs) {
                 //step in path direction
                 let step_str = cur_str;
-                let step_loc = path_locs[i];
-                let step_prev_loc = null;
-                while ((step_str in path_dict) && !(step_str in obst_dict) &&
-                    game_bound_check(new_state, step_loc)) {
-                    step_prev_loc = step_loc;
+                while ((step_str in path_dict) && !(step_str in obst_dict) && game_bound_check(new_state, step_loc)) {
                     step_loc = step_loc.get_dir(pos_dir);
                     step_str = step_loc.get_string();
-
                 }
 
                 // check if stepping ended on a obstacle
@@ -385,8 +361,8 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                     break;
                 }
 
-
             }
+
             // check if path could not be cleared. This is when we incrementally push and recheck
             if (chosen_dir != null) {
 
@@ -395,12 +371,8 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 // note that the side of the pushable is opposite the direction you want to push it
                 let side_of_push = pushing_side(path_locs[i], chosen_dir);
 
-
-
                 //path to side of push. TODO- might be an issue when multiple yous?
                 let path_to_side = pos_dirs_dict[chosen_dir];
-                // start_loc = last_loc;
-                // [path_to_side, temp_list] = a_star_avoid_push(new_state, start_loc, side_of_push);
 
                 // step in direction until rock not in path. count how many times moved.
                 // side_of_push is start location
@@ -409,8 +381,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 let push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
 
                 // do checks on the pushable, then count as move
-                while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) &&
-                    game_bound_check(new_state, step_loc)) {
+                while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) && game_bound_check(new_state, step_loc)) {
                     counter++;
                     cur_loc = cur_loc.get_dir(chosen_dir);
                     push_loc_str = cur_loc.get_dir(chosen_dir).get_dir(chosen_dir).get_string();
@@ -418,7 +389,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
 
                 //set end location
                 last_loc = cur_loc;
-
 
                 // add the steps of pushing to path to side of push
                 let full_path;
@@ -460,10 +430,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                     // and last_loc is the location YOU end at after pushing the object out of the way
                     // simulate path to get new state. Set to "cur_state", for use moving the next pushable
                     cur_state = simulate(cur_state, path_to_side_2);
-                    // last_loc = side_of_push;
-
-                    // cur_yous = isYou(cur_state, []);
-                    // prev_yous = [];
 
                     // move in direction one space. get the new state. 
                     //Check that the new state is different from the prev_state. If not, exit before recursive call
@@ -485,7 +451,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                         if (temp_path.length != 0) {
                             if (path_to_side_2[0] != 'space') {
                                 running_path = path_to_side_2.concat([push_dir]);
-
                             }
                             else {
                                 running_path = [push_dir];
@@ -498,11 +463,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                         // recursively retry canClearPath with new state and new path locations
                         let clearing_path, _temp_pushed;
                         [clearing_path, _temp_pushed, last_loc] = canClearPath(cur_state, new_locs, start_obj_1, []);
-                        // if (path_reachable.length == 0) {
-                        //     start_loc = new Position(you.x, you.y);
-                        //     last_loc = simulate_pos(start_loc, path_reachable);
-                        //     break;
-                        // }
+
                         if (clearing_path.length != 0) {
                             if (path_to_side_2[0] != 'space') {
                                 running_path = path_to_side_2.concat([push_dir], clearing_path);
@@ -518,9 +479,6 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                     break;
                 }
             }
-
-
-
         }
     }
 

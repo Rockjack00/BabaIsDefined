@@ -155,7 +155,7 @@ function pushing_side(position, direction) {
  */
 function permutations_of_list(start_list) {
   // remove duplicates
-  let start_list = start_list.filter((pos, index) => {
+  start_list = start_list.filter((pos, index) => {
     const str_pos = pos.get_string();
     return index === start_list.findIndex(obj => {
       return obj.get_string() === str_pos;
