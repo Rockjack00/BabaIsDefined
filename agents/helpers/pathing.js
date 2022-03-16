@@ -347,21 +347,21 @@ function get_manhattan(start, end) {
 function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, path) {
   // A* Search Algorithm
   // 1.  Initialize the open list
-  open_list = [];
+  let open_list = [];
   // 2.  Initialize the closed list
   //     put the starting node on the open 
   //     list (you can leave its f at zero)
-  closed_list = [];
+  let closed_list = [];
   // TODO check that this is adding to list correctly? Javascript can be weird
-  start_node = new Node(cur_location, 0, null, null);
+  let start_node = new Node(cur_location, 0, null, null);
   open_list.push(start_node);
 
   // 3.  while the open list is not empty
   while (open_list.length > 0) {
     // a) find the node with the least f on 
     //    the open list, call it "q"
-    prev_f = open_list[0].get_f();
-    q_index = 0;
+    let prev_f = open_list[0].get_f();
+    let q_index = 0;
     for (let i = 1; i < open_list.length; ++i) {
       cur_f = open_list[i].get_f();
       if (cur_f < prev_f) {
@@ -371,13 +371,13 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
 
     // b) pop q off the open list
     // TODO check this is actually popping
-    q = open_list[q_index]; // get node
+    let q = open_list[q_index]; // get node
     open_list.splice(q_index, 1); // remove node from list
 
     // c) generate q's 4 successors and set their parents to q
     // for refence: const possActions = ["space", "right", "up", "left", "down"];
-    successors = [];
-    dirs = ["up", "down", "left", "right"]
+    let successors = [];
+    let dirs = ["up", "down", "left", "right"]
     for (dir of dirs) {
       next_node = get_node(q, dir)
       next_space = next_node.get_pos();
@@ -390,7 +390,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
 
     // d) for each successor
     for (let i = 0; i < successors.length; ++i) {
-      succ_node = successors[i];
+      let succ_node = successors[i];
       //     i) if successor is the goal, stop search
       if (succ_node.get_pos().get_string() == end_pos.get_string()) {
         return succ_node; // and then step through the node backwards to make the path
@@ -412,9 +412,9 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
       //     iii) if a node with the same position as 
       //         successor is in the OPEN list which has a 
       //        lower f than successor, skip this successor
-      skip_s = false;
+      let skip_s = false;
       for (let i = 0; i < open_list.length; ++i) {
-        list_node = open_list[i];
+        let list_node = open_list[i];
         if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
           (list_node.get_f() < succ_node.get_f())) {
           skip_s = true;
@@ -466,25 +466,25 @@ function get_node(q, dir) {
   throw new Error("ERROR: Expected one of direction 'up', 'down', 'left', or 'right', but got direction " + dir)
 }
 
-function push_turn_check(state, cur_node) {
-  let next_node = cur_node.parent;
+function push_turn_check(state, next_node) {
+  let prev_node = next_node.parent; // prev_node is one step behind next_node
   // can push at beginning is done before getting here
-  if ((cur_node == null) || (next_node == null) || (next_node.parent == null)) {
+  if ((next_node == null) || (prev_node == null) || (prev_node.move == null)) {
     return true;
   }
 
 
 
   // if current move and next move are different, check that you can path from current side to side for the next move.
-  if (cur_node.move != next_node.move) {
-    // your current postition is the cur_node's parent's position
-    let cur_pos = cur_node.parent.get_pos();
-    // your next position is the cur_node's side position
-    let next_pos = cur_node.get_pos();
-    let side_to_push = pushing_side(next_pos, cur_node.move);
+  if (prev_node.move != next_node.move) {
+    let next_move = next_node.move;
+    let prev_move = prev_node.move;
+    let target = pushing_side(prev_node.position, next_move);
+    // start is prev_node, one in opposite direction of prev_move
+    let start = pushing_side(prev_node.position, prev_move);
 
     // path to the side
-    let [path_to_side, _] = a_star_avoid_push(state, cur_pos, side_to_push);
+    let [path_to_side, _] = a_star_avoid_push(state, start, target);
     return path_to_side.length != 0;
   }
   return true;
@@ -496,21 +496,21 @@ function push_turn_check(state, cur_node) {
 function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_move) {
   // A* Search Algorithm
   // 1.  Initialize the open list
-  open_list = [];
+  let open_list = [];
   // 2.  Initialize the closed list
   //     put the starting node on the open 
   //     list (you can leave its f at zero)
-  closed_list = [];
+  let closed_list = [];
   // TODO check that this is adding to list correctly? Javascript can be weird
-  start_node = new Node(cur_location, 0, null, first_move);
+  let start_node = new Node(cur_location, 0, null, first_move);
   open_list.push(start_node);
 
   // 3.  while the open list is not empty
   while (open_list.length > 0) {
     // a) find the node with the least f on 
     //    the open list, call it "q"
-    prev_f = open_list[0].get_f();
-    q_index = 0;
+    let prev_f = open_list[0].get_f();
+    let q_index = 0;
     for (let i = 1; i < open_list.length; ++i) {
       cur_f = open_list[i].get_f();
       if (cur_f < prev_f) {
@@ -529,8 +529,8 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
 
     // for refence: const possActions = ["space", "right", "up", "left", "down"];
 
-    successors = [];
-    dirs = ["up", "down", "left", "right"]
+    let successors = [];
+    let dirs = ["up", "down", "left", "right"]
     for (dir of dirs) {
       let next_node = get_node(q, dir)
       let next_space = next_node.get_pos();
@@ -543,7 +543,7 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
 
     // d) for each successor
     for (let i = 0; i < successors.length; ++i) {
-      succ_node = successors[i];
+      let succ_node = successors[i];
       //     i) if successor is the goal, stop search
       if (succ_node.get_pos().get_string() == end_pos.get_string()) {
         return succ_node; // and then step through the node backwards to make the path
