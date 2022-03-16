@@ -18,9 +18,9 @@ function solve_level(state) {
   let yous = isYou(state, []);
 
   /// DEBUG ///
-  // flag_noun = state["words"][5];
-  // path = canPushTo(state, flag_noun, new Position(5, 1), []);
-  // console.log(path);
+  flag_noun = state["words"][5];
+  path = canPushTo(state, flag_noun, new Position(5, 1), []);
+  console.log(path);
 
   // let deactivate_rules = canDeactivateRules(state, []);
   // console.log(deactivate_rules)

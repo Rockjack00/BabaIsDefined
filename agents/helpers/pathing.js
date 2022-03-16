@@ -1,5 +1,5 @@
 const { check } = require("prettier");
-const { accessGameState, add_to_dict, Position, bounds, pushing_side } = require("./helpers");
+const { accessGameState, add_to_dict, Position, bounds, pushing_side, simulate } = require("./helpers");
 
 // for Reference, this are the position actions
 const possActions = ["space", "right", "up", "left", "down"];
@@ -195,6 +195,15 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
 
 // A* Pathing
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
+/**
+ * 
+ * @param {GameState} state 
+ * @param {*} start_obj 
+ * @param {*} end_obj 
+ * @param {*} push_are_obst 
+ * @param {*} avoid_these 
+ * @returns 
+ */
 function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these) {
   start_pos = new Position(start_obj.x, start_obj.y);
   end_pos = new Position(end_obj.x, end_obj.y);
@@ -275,7 +284,7 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
     path_locations = [];
   }
   else {
-    path_moves = get_moves(path_end_node, pushing);
+    path_moves = get_moves(path_end_node, pushing, state);
     if (!pushing) {
       path_locations = get_move_positions(path_end_node);
     }
@@ -286,41 +295,33 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   return [path_moves, path_locations];
 }
 
-function get_moves(node, pushing) {
-  if (node.parent == null) {
+function get_moves(cur_node, pushing, state) {
+  let prev_node = cur_node.parent;
+  if (prev_node == null) {
     return [];
   }
 
-  var moves = get_moves(node.parent);
+  let moves = get_moves(prev_node, pushing, state);
+  let cur_move = cur_node.move;
 
   // if pushing an object
   if ((pushing) && (moves.length != 0)) {
-    next_move = node.move;
-    prev_move = moves[moves.length - 1];
-    if (prev_move != next_move) {
-      // move opposite of next_move
-      switch (next_move) {
-        case "right":
-          moves.push("left");
-          break;
-        case "left":
-          moves.push("right");
-          break;
-        case "up":
-          moves.push("down");
-          break;
-        case "down":
-          moves.push("up");
-          break;
-      }
+    let prev_move = prev_node.move;//moves[moves.length - 1];
+    if (prev_move != cur_move) {
+      // path to the side of the previous object
+      // target is prev_node side for cur_node move
+      let target = pushing_side(prev_node.position, cur_move);
+      // start is prev_node, one in opposite direction of prev_move
+      let start = pushing_side(prev_node.position, prev_move);
 
-      // move same as prev_move
-      moves.push(prev_move);
+      cur_state = simulate(state, moves);
+      let [path_to_side, _] = a_star_avoid_push(cur_state, start, target);
+      moves = moves.concat(path_to_side);
     }
   }
   // end of if
 
-  moves.push(node.move);
+  moves.push(cur_move);
 
   return moves;
 }
@@ -531,9 +532,9 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
     successors = [];
     dirs = ["up", "down", "left", "right"]
     for (dir of dirs) {
-      next_node = get_node(q, dir)
-      next_space = next_node.get_pos();
-      next_str = next_node.get_pos().get_string();
+      let next_node = get_node(q, dir)
+      let next_space = next_node.get_pos();
+      let next_str = next_node.get_pos().get_string();
       if (!(next_str in obstacles) &&
         game_bound_check(state, next_space) && push_turn_check(state, next_node)) {
         successors.push(next_node);
