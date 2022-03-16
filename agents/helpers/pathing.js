@@ -8,6 +8,13 @@ const possActions = ["space", "right", "up", "left", "down"];
 var searched = {};
 
 class Node {
+  /**
+   * 
+   * @param {Position} position 
+   * @param {int} f 
+   * @param {Node} parent 
+   * @param {string} move 
+   */
   constructor(position, f, parent, move) {
     this.move = move;
     this.position = position;
@@ -17,26 +24,39 @@ class Node {
     this.h = 0;
   }
 
+  /**
+   * 
+   * @returns parent Node
+   */
   get_parent() {
     return this.parent;
   }
 
+  /**
+   * 
+   * @returns f
+   */
   get_f() {
     return this.f;
   }
 
+  /**
+   * 
+   * @returns position
+   */
   get_pos() {
     return this.position;
   }
 }
 
-//TODO - Return what is preventing movement. An array that marks what types of objects are in the way.
-// - to do this, we need to edit the inputs to floodfill reachable
-
-// todo - Make these inputs match up with reachable predicate.
-// todo - Currently the predicate uses (X,Y, Map, Path)
-// todo - what is in Map?
-// todo - path is something that this function will set
+/**
+ * @deprecated
+ * 
+ * @param {*} state Game state.
+ * @param {*} start_obj Start object for pathing.
+ * @param {*} end_obj Target object for pathing.
+ * @returns {Array} Path from cur_location to end_pos.
+ */
 function floodfill_reachable(state, start_obj, end_obj) {
   start_pos = new Position(start_obj.x, start_obj.y);
   end_pos = new Position(end_obj.x, end_obj.y);
@@ -46,6 +66,14 @@ function floodfill_reachable(state, start_obj, end_obj) {
   return path;
 }
 
+/**
+ * @deprecated
+ * 
+ * @param {*} state Game state.
+ * @param {*} start_obj Start object for pathing.
+ * @param {*} end_obj Target object for pathing.
+ * @returns {Array} Path from cur_location to end_pos.
+ */
 function floodfill(start_pos, end_pos, state) {
   // only runs for actual moves. Ignores "space" which is "wait"
   range = 4;
@@ -88,14 +116,6 @@ function floodfill(start_pos, end_pos, state) {
   return path;
 }
 
-
-function game_bound_check(state, next_space) {
-  const [x_bounds, y_bounds] = bounds(state);
-
-  return (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
-    (next_space.x > 0) && (next_space.y > 0);
-}
-
 // cur_location - Position object
 // goal_pos -  Goal Position
 // searched - reference to Dictionary of already searched locations. Starts empty.
@@ -103,6 +123,18 @@ function game_bound_check(state, next_space) {
 // obstacles - dictionary of obstacles keyed by their location
 //
 // returns path to the goal
+/**
+ * @deprecated
+ * 
+ * @param {*} cur_location 
+ * @param {*} end_pos 
+ * @param {*} obstacles 
+ * @param {*} move_actions 
+ * @param {*} x_bounds 
+ * @param {*} y_bounds 
+ * @param {*} path 
+ * @returns {Array} Path from cur_location to end_pos.
+ */
 function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bounds, path) {
   for (let i = 0; i < move_actions.length; ++i) {
     switch (move_actions[i]) {
@@ -193,16 +225,29 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
 }
 
 
+/**
+ * 
+ * @param {*} state 
+ * @param {Position} next_space 
+ * @returns {boolean} True if the space is within state's bounds.
+ */
+function game_bound_check(state, next_space) {
+  const [x_bounds, y_bounds] = bounds(state);
+
+  return (next_space.x < x_bounds) && (next_space.y < y_bounds) &&
+    (next_space.x > 0) && (next_space.y > 0);
+}
+
 // A* Pathing
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 /**
  * 
- * @param {GameState} state 
+ * @param {*} state 
  * @param {*} start_obj 
  * @param {*} end_obj 
- * @param {*} push_are_obst 
- * @param {*} avoid_these 
- * @returns 
+ * @param {boolean} push_are_obst 
+ * @param {Array} avoid_these 
+ * @returns {[Array, Array]} [path_moves, path_locations] 
  */
 function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these) {
   start_pos = new Position(start_obj.x, start_obj.y);
@@ -211,14 +256,39 @@ function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these)
   return a_star(start_pos, end_pos, state, push_are_obst, avoid_these, false);
 }
 
+/**
+ * 
+ * @param {*} state 
+ * @param {Position} start_pos 
+ * @param {Position} end_pos 
+ * @returns {[Array, Array]} [path_moves, path_locations] 
+ */
 function a_star_pushing(state, start_pos, end_pos) {
   return a_star(start_pos, end_pos, state, true, [], true);
 }
 
+/**
+ * 
+ * @param {*} state 
+ * @param {Position} start_pos 
+ * @param {Position} end_pos 
+ * @returns {[Array, Array]} [path_moves, path_locations] 
+ */
 function a_star_avoid_push(state, start_pos, end_pos) {
   return a_star(start_pos, end_pos, state, true, [], false);
 }
 
+/**
+ * @description The setup for running A* and generating the path.
+ * 
+ * @param {*} start_pos 
+ * @param {*} end_pos 
+ * @param {*} state 
+ * @param {boolean} push_are_obst 
+ * @param {Array} avoid_these 
+ * @param {boolean} pushing 
+ * @returns {[Array, Array]} [path_moves, path_locations] 
+ */
 function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
   // first, check that you are not already on the end location.
   if (end_pos.get_string() == start_pos.get_string()) {
@@ -295,6 +365,13 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   return [path_moves, path_locations];
 }
 
+/**
+ * 
+ * @param {Node} cur_node This is the starting node to build the path.
+ * @param {boolean} pushing Determines if this is the pushing variation of A*.
+ * @param {*} state 
+ * @returns {Array} The path generated by A* algorithms.
+ */
 function get_moves(cur_node, pushing, state) {
   let prev_node = cur_node.parent;
   if (prev_node == null) {
@@ -326,6 +403,11 @@ function get_moves(cur_node, pushing, state) {
   return moves;
 }
 
+/**
+ * 
+ * @param {Node} node 
+ * @returns {Array} The path generated by A*, as a list of Positions.
+ */
 function get_move_positions(node) {
   if (node.parent == null) {
     return [];
@@ -337,6 +419,12 @@ function get_move_positions(node) {
   return moves;
 }
 
+/**
+ * 
+ * @param {Position} start 
+ * @param {Position} end 
+ * @returns The manhattan distance betwen two locations on the game board.
+ */
 function get_manhattan(start, end) {
   x_dist = Math.abs(start.x - end.x);
   y_dist = Math.abs(start.y - end.y);
@@ -344,6 +432,17 @@ function get_manhattan(start, end) {
 }
 
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
+/**
+ * @description The main A* solver function. 
+ * 
+ * @param {*} cur_location 
+ * @param {*} end_pos 
+ * @param {*} obstacles 
+ * @param {*} move_actions 
+ * @param {*} state 
+ * @param {*} path 
+ * @returns {Node} Returns the node for the end of the path.
+ */
 function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, path) {
   // A* Search Algorithm
   // 1.  Initialize the open list
@@ -452,6 +551,12 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
   return start_node;
 }
 
+/**
+ * 
+ * @param {Node} q 
+ * @param {string} dir 
+ * @returns {Node} A new Node object for the direction and parent node.
+ */
 function get_node(q, dir) {
   switch (dir) {
     case "up":
@@ -466,6 +571,13 @@ function get_node(q, dir) {
   throw new Error("ERROR: Expected one of direction 'up', 'down', 'left', or 'right', but got direction " + dir)
 }
 
+/**
+ * @description For a_star_pushed_solver, this checks that turns are possible when pushing pushables or words.
+ * 
+ * @param {*} state 
+ * @param {Node} next_node 
+ * @returns 
+ */
 function push_turn_check(state, next_node) {
   let prev_node = next_node.parent; // prev_node is one step behind next_node
   // can push at beginning is done before getting here
@@ -493,6 +605,16 @@ function push_turn_check(state, next_node) {
 // psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 // this A* is for objects being pushed by YOU. 
 // The key is to make sure that if you turn, YOU can get to the opposite side to push from.
+/**
+ * @description Pushing version of A* pathing.
+ * 
+ * @param {*} state 
+ * @param {Position} cur_location 
+ * @param {Position} end_pos 
+ * @param {*} obstacles 
+ * @param {string} first_move 
+ * @returns {Node} Returns the node for the end of the path.
+ */
 function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_move) {
   // A* Search Algorithm
   // 1.  Initialize the open list
