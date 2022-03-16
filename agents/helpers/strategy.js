@@ -1,13 +1,13 @@
-const { isYou, isWin, isReachable, isNoun, canPushTo, isConnector, isProperty } = require("./predicates");
-const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, canDeactivateRules, activeRules, getRules } = require("./rules");
-const { simulate, copy_state, Position } = require("./helpers");
+const { isYou, isWin, isReachable, isNoun, isConnector, isProperty } = require("./predicates");
+const { generatePropertyRules, canActivateRules, canDeactivateRules, activeRules, getRules } = require("./rules");
+const { simulate, copy_state } = require("./helpers");
 const { makeSeq } = require("../random_AGENT");
 const simjs = require("../../js/simulation");
-const { validSolution } = require("../../js/exec");
+const { random } = require("lodash");
 
 // Optionally do eager evaluation (depth first)
 const EAGER = false;
-var MAX_SEQ = 50;
+const MAX_SEQ = 50;
 
 /**
  * Find a winning path in the current game state.
@@ -16,19 +16,6 @@ var MAX_SEQ = 50;
  */
 function solve_level(state) {
   let yous = isYou(state, []);
-
-  /// DEBUG ///
-  // flag_noun = state["words"][5];
-  // path = canPushTo(state, flag_noun, new Position(5, 1), []);
-  // console.log(path);
-
-  // let deactivate_rules = canDeactivateRules(state, []);
-  // console.log(deactivate_rules)
-
-  // let changeable_Rules = canChangeRules(state, []);
-  // console.log(changeable_Rules);
-
-  /// END DEBUG ///
 
   /**
    * Are any objects that are YOU also WIN?
@@ -270,9 +257,9 @@ function singleRuleChangeSolve(state, rules) {
 
 /**
  * Employs a default (random) solver if no path can be found by the intelligent solver.
- *              The goal is either to find a winning path, or to find a new state that can be handed to the intelligent solver.
+ * The goal is either to find a winning path, or to find a new state that can be handed to the intelligent solver.
  * @param {State} state the current game state.
- * @returns {Array<String>} a winning path OR calls solve_level again with the updated state.
+ * @returns {Array<String>} a winning path OR the empty list if none is found.
  */
 function defaultSolve(state) {
   console.log("Could not find winning path.\n Default behavior: attempting random steps.");
@@ -280,12 +267,25 @@ function defaultSolve(state) {
   if (path.length == 0) {
     console.log("Unable to solve this level.");
     return [];
-  } else if (validSolution(path, simjs.showState(state))) {
-    return path;
   }
 
+  // see if the random path results in a win.
+  let win = simjs.nextMove(path[path.length - 1], simulate(state, path.slice(-2))).won
+
   // try to solve level with new randomly started state
-  return path.concat(solve_level(simulate(state, path)));
+
+  /// DEBUG ///
+  let randomStart = simulate(state, path);
+  console.log(simjs.parseMap(simjs.showState(randomStart)));
+  let winningPath = solve_level(randomStart);
+  console.log(winningPath);
+  //console.log(path.concat(winningPath));
+  console.log();
+  /// END DEBUG ///
+
+
+
+  return win ? path : path.concat(solve_level(simulate(state, path)));
 }
 
 module.exports = { solve_level, defaultSolve };
