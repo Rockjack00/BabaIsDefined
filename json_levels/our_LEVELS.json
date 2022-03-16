@@ -1,11 +1,32 @@
 {
     "levels": [
         {
-            "id": 10,
-            "name": "Push To around Obstacle",
+            "id": 230,
+            "name": "Testing canPushTo 2",
             "author": "Kormaican",
-            "ascii": "__________\n_B.b..13._\n_1......._\n_2......._\n_....w..._\n_....F..._\n_W......._\n_1.f....._\n_6......._\n__________",
-            "solution": "ddddrrdruuuruldludlldddd"
+            "ascii": "__________\n_F13.ww.._\n_B12.15.._\n_www..w.._\n_fww..w.._\n_...v.w.._\n_R15w.w.W_\n_wwwwrw.1_\n_b......6_\n__________",
+            "solution": "rrrruuuuuludddlllu"
+        },
+        {
+            "id": 0,
+            "name": "test Win is You",
+            "author": "Baba",
+            "ascii": "__________\n_B13....._\n_1......._\n_2......._\n_...bf..._\n_........_\n_........_\n_........_\n_.....F12_\n__________",
+            "solution": "r"
+        },
+        {
+            "id": 1,
+            "name": "Test right 5x",
+            "author": "",
+            "ascii": "__________\n_B12..F13_\n_........_\n_........_\n_........_\n_.b....f._\n_........_\n_........_\n_........_\n__________",
+            "solution": "rrrrr"
+        },
+        {
+            "id": 2,
+            "name": "Test odd path",
+            "author": "Baba",
+            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..._\n_..w...w._\n_...wwww._\n_........_\n_W16....._\n__________",
+            "solution": "uurrrrrrddlldllu"
         },
         {
             "id": 5,
@@ -50,25 +71,11 @@
             "solution": "rrrruuuuluudddlllu"
         },
         {
-            "id": 0,
-            "name": "test Win is You",
-            "author": "Baba",
-            "ascii": "__________\n_B13....._\n_1......._\n_2......._\n_...bf..._\n_........_\n_........_\n_........_\n_.....F12_\n__________",
-            "solution": "r"
-        },
-        {
-            "id": 1,
-            "name": "Test right 5x",
-            "author": "",
-            "ascii": "__________\n_B12..F13_\n_........_\n_........_\n_........_\n_.b....f._\n_........_\n_........_\n_........_\n__________",
-            "solution": "rrrrr"
-        },
-        {
-            "id": 2,
-            "name": "Test odd path",
-            "author": "Baba",
-            "ascii": "__________\n_B12..F13_\n_........_\n_..wwwww._\n_.bwfw..._\n_..w...w._\n_...wwww._\n_........_\n_W16....._\n__________",
-            "solution": "uurrrrrrddlldllu"
+            "id": 10,
+            "name": "Push To around Obstacle",
+            "author": "Kormaican",
+            "ascii": "__________\n_B.b..13._\n_1......._\n_2......._\n_....w..._\n_....F..._\n_W......._\n_1.f....._\n_6......._\n__________",
+            "solution": "ddddrrdruuuruldludlldddd"
         }
     ]
 }

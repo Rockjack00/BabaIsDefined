@@ -384,7 +384,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) && game_bound_check(new_state, step_loc)) {
                     counter++;
                     cur_loc = cur_loc.get_dir(chosen_dir);
-                    push_loc_str = cur_loc.get_dir(chosen_dir).get_dir(chosen_dir).get_string();
+                    push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
                 }
 
                 //set end location
