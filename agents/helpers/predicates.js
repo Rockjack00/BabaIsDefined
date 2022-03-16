@@ -52,8 +52,8 @@ function isWin(state, wins) {
 function isReachable(state, start, target, path) {
     if (path.length > 0) {
         // step through the path. Check if gets to the target
-        var win = false;
-        var nextState = state;
+        let win = false;
+        let nextState = state;
         for (let step of path) {
             //TODO: simulate(state, steps)
             [nextState, win] = simjs.nextMove(step, nextState);
@@ -73,6 +73,7 @@ function isReachable(state, start, target, path) {
 
         // try A*, but ignore obstacles. Send this to canClearPath.
         [new_path, path_locations] = a_star_reachable(state, start, target, false, []);
+        let clearing_path, moved_pushables, last_loc;
         [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, []);
 
         //
@@ -80,13 +81,14 @@ function isReachable(state, start, target, path) {
         // simulate new path
         // let new_state = copy_state(state);
         // new_start_pos = simulate_pos(start_pos, clearing_path);
-        new_state = simulate(state, clearing_path);
+        let new_state = simulate(state, clearing_path);
         // if recursive calls were made in canClearPath, clearing path might THE path.
         // if(){
         //     return clearing_path;
         // }
 
         // retry A* when pushables are obstacles. Use new state
+        let new_astar;
         [new_astar, path_locations] = a_star_reachable(new_state, last_loc, target, true, []);
 
         // if it cannot get to the goal after clearing the path, 
@@ -95,9 +97,9 @@ function isReachable(state, start, target, path) {
         // do this until no pushables are left. Return empty list if this happens.
         if (new_astar.length == 0) {
             clearing_path = [];
-            avoid_these_1 = moved_pushables;
-            avoid_perms = permutations_of_list(avoid_these_1);
-            for (avoid_these of avoid_perms) {
+            let avoid_these_1 = moved_pushables;
+            let avoid_perms = permutations_of_list(avoid_these_1);
+            for (let avoid_these of avoid_perms) {
                 // while (new_astar.length == 0) {
                 // try A* and clear path again, but consider the last pushable an obstacle.
                 [new_astar, path_locations] = a_star_reachable(state, start, target, false, avoid_these);
@@ -119,7 +121,7 @@ function isReachable(state, start, target, path) {
         }
 
         // concat clear path and new A*
-        full_path = clearing_path.concat(new_astar);
+        let full_path = clearing_path.concat(new_astar);
 
         return full_path;
     }
@@ -129,8 +131,8 @@ function isReachable(state, start, target, path) {
 function isReachableAvoidPush(state, start, target, path) {
     if (path.length > 0) {
         // step through the path. Check if gets to the target
-        var win = false;
-        var nextState = state;
+        let win = false;
+        let nextState = state;
         for (let step of path) {
             [nextState, win] = simjs.nextMove(step, nextState);
             if (win) {
@@ -297,17 +299,17 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     const pushables = accessGameState(state, "pushables");
     // TODO - check if pushables includes words?? Will this be an issue?
     // push_dict = {};
-    obst_dict = {};
-    temp_push_dict = add_to_dict(pushables, {});
+    let obst_dict = {};
+    let temp_push_dict = add_to_dict(pushables, {});
 
-    path_dict = {};
-    for (path_loc of path_locs) {
+    let path_dict = {};
+    for (let path_loc of path_locs) {
         path_dict[path_loc.get_string()] = path_loc;
     }
 
     //remove avoid_these from push_dict. Add to obst_dict instead
-    for (avoid_this of avoid_these) {
-        avoid_str = avoid_this.get_string();
+    for (let avoid_this of avoid_these) {
+        let avoid_str = avoid_this.get_string();
         obst_dict[avoid_str] = temp_push_dict[avoid_str];
         delete temp_push_dict[avoid_str];
     }
@@ -337,17 +339,17 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     let new_state = copy_state(state);
 
     // set the last location as the start_bj location
-    last_loc = new Position(start_obj.x, start_obj.y);
+    let last_loc = new Position(start_obj.x, start_obj.y);
 
     //the running path to move all objects out of the way.
-    running_path = [];
+    let running_path = [];
 
     // checks if it can push, but cannot path out of the way
     let danger_push = [];
 
     // step through the path to find pushables that are in the way
     for (let i = 0; i < path_locs.length; ++i) {
-        cur_str = path_locs[i].get_string();
+        let cur_str = path_locs[i].get_string();
         if (cur_str in push_dict) {
             path_reachable = [];
             // first, add to moved_pushables
@@ -356,11 +358,11 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
 
             // try to push out of the way. {direction: <dir>, path: <path-to-take>}
 
-            pos_dirs_dict_temp = canPush(new_state, push_dict[cur_str], []);
-            pos_dirs_dict = {};
-            pos_dirs = [];
+            let pos_dirs_dict_temp = canPush(new_state, push_dict[cur_str], []);
+            let pos_dirs_dict = {};
+            let pos_dirs = [];
 
-            for (key of pos_dirs_dict_temp.keys()) {
+            for (let key of pos_dirs_dict_temp.keys()) {
                 pos_dirs_dict[pos_dirs_dict_temp[key]['direction']] = pos_dirs_dict_temp[key]['path'];
                 pos_dirs.push(pos_dirs_dict_temp[key]['direction']);
             }
@@ -369,12 +371,12 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 break;
             }
 
-            chosen_dir = null;
-            for (pos_dir of pos_dirs) {
+            let chosen_dir = null;
+            for (let pos_dir of pos_dirs) {
                 //step in path direction
-                step_str = cur_str;
-                step_loc = path_locs[i];
-                step_prev_loc = null;
+                let step_str = cur_str;
+                let step_loc = path_locs[i];
+                let step_prev_loc = null;
                 while ((step_str in path_dict) && !(step_str in obst_dict) &&
                     game_bound_check(new_state, step_loc)) {
                     step_prev_loc = step_loc;
@@ -404,20 +406,20 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 // generate path to move pushable out of the way
                 // first, go to the correct side of the pushable
                 // note that the side of the pushable is opposite the direction you want to push it
-                side_of_push = pushing_side(path_locs[i], chosen_dir);
+                let side_of_push = pushing_side(path_locs[i], chosen_dir);
 
 
 
                 //path to side of push. TODO- might be an issue when multiple yous?
-                path_to_side = pos_dirs_dict[chosen_dir];
+                let path_to_side = pos_dirs_dict[chosen_dir];
                 // start_loc = last_loc;
                 // [path_to_side, temp_list] = a_star_avoid_push(new_state, start_loc, side_of_push);
 
                 // step in direction until rock not in path. count how many times moved.
                 // side_of_push is start location
-                counter = 0;
-                cur_loc = side_of_push;
-                push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
+                let counter = 0;
+                let cur_loc = side_of_push;
+                let push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
 
                 // do checks on the pushable, then count as move
                 while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) &&
@@ -430,7 +432,9 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 //set end location
                 last_loc = cur_loc;
 
+                
                 // add the steps of pushing to path to side of push
+                let full_path;
                 if (path_to_side[0] != "space") {
                     full_path = path_to_side;
                     for (let j = 0; j < counter; j++) {
@@ -452,15 +456,15 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
 
             // if it can push, just not out of the path, recursively call isReachable
             if (danger_push.length != 0) {
-                for (push_dir_temp of danger_push) {
+                for (let push_dir_temp of danger_push) {
                     const push_dir = push_dir_temp;
-                    cur_state = copy_state(state);
+                    let cur_state = copy_state(state);
                     // set the last location as the start_obj location
                     // last_loc = new Position(start_obj.x, start_obj.y);
 
                     // first, go to the correct side of the pushable
                     // note that the side of the pushable is opposite the direction you want to push it
-                    side_of_push = pushing_side(path_locs[i], push_dir);
+                    let side_of_push = pushing_side(path_locs[i], push_dir);
 
 
                     //path to side of push
@@ -480,15 +484,16 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                     if (!state_equality(state, cur_state)) {
                         last_loc = simulate_pos(last_loc, path_to_side_2);
                         last_loc = last_loc.get_dir(push_dir);
-                        target_loc = path_locs[path_locs.length - 1];
-                        obj_dict = add_to_dict(cur_state.phys, {});
+                        let target_loc = path_locs[path_locs.length - 1];
+                        let obj_dict = add_to_dict(cur_state.phys, {});
                         obj_dict = add_to_dict(cur_state.words, obj_dict);
 
 
-                        start_obj_1 = obj_dict[last_loc.get_string()];
-                        target_obj_1 = obj_dict[target_loc.get_string()];
+                        let start_obj_1 = obj_dict[last_loc.get_string()];
+                        let target_obj_1 = obj_dict[target_loc.get_string()];
 
                         // try A* as pushables are obstacles
+                        let temp_path, new_locs;
                         [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, true, []);
                         if (temp_path.length != 0) {
                             if (path_to_side_2[0] != 'space') {
@@ -504,6 +509,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                         // try A* ignoring pushables,except avoid_these
                         [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, false, avoid_these);
                         // recursively retry canClearPath with new state and new path locations
+                        let clearing_path, _temp_pushed;
                         [clearing_path, _temp_pushed, last_loc] = canClearPath(cur_state, new_locs, start_obj_1, []);
                         // if (path_reachable.length == 0) {
                         //     start_loc = new Position(you.x, you.y);
@@ -547,7 +553,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
  *                      {obj: <object>, directions: [{direction:<dir>, path: <p>}, ...]}.
  */
 function canPushThese(state, pushes) {
-    var outList = [];
+    let outList = [];
 
     // only check the queries that are actually pushable
     isPush(state, pushes).forEach((p) => {
@@ -570,8 +576,8 @@ function canPushThese(state, pushes) {
  *                 items in this list are key/value pairs of the form {direction: <dir>, path: <path-to-take>}
  */
 function canPush(state, target, directions) {
-    var state = copy_state(state);
-    var outList = [];
+    let state_copy = copy_state(state);
+    let outList = [];
 
 
     // check all directions if unspecified
@@ -580,7 +586,7 @@ function canPush(state, target, directions) {
     }
 
     for (let c of directions) {
-        let reachablePath = canPushInDirection(state, target, c);
+        let reachablePath = canPushInDirection(state_copy, target, c);
         if (reachablePath.length > 0) {
             outList.push({ "direction": c, "path": reachablePath });
         }
@@ -588,6 +594,8 @@ function canPush(state, target, directions) {
 
     return outList;
 }
+
+// TODO: add the last pushing action to the path
 
 /**
  * @description Get the path to push a target in a direction
@@ -649,7 +657,7 @@ function canPushInDirection(state, target, direction) {
         // check that the prediction was actually possible in the simulator
         if (reachablePath.length > 0) {
             // see if it moves in the game state at that direction
-            let pushState = simulate(state, reachablePath)
+            let pushState = simulate(state, reachablePath);
 
             // did the state change?
             // TODO: we may need to do this a different way when levels become more complex
@@ -680,21 +688,21 @@ function canPushInDirection(state, target, direction) {
 function canPushTo(state, target, end_location, path) {
 
     // first, do canPush to get initial pushable directions. 
-    pos_dirs_dict_temp = canPush(state, target, []);
-    pos_dirs_dict = {};
-    pos_dirs = [];
+    let pos_dirs_dict_temp = canPush(state, target, []);
+    let pos_dirs_dict = {};
+    let pos_dirs = [];
 
-    for (key of pos_dirs_dict_temp.keys()) {
+    for (let key of pos_dirs_dict_temp.keys()) {
         pos_dirs_dict[pos_dirs_dict_temp[key]['direction']] = pos_dirs_dict_temp[key]['path'];
         pos_dirs.push(pos_dirs_dict_temp[key]['direction']);
     }
 
-    target_loc = new Position(target.x, target.y);
+    let target_loc = new Position(target.x, target.y);
 
     // ignore side-effects, for each YOU, try the following
-    yous = isYou(state, []);
-    for (you of yous) {
-        you_pos = new Position(you.x, you.y);
+    let yous = isYou(state, []);
+    for (let you of yous) {
+        let you_pos = new Position(you.x, you.y);
 
         // for each direction, try a path. Always include the first move here, then the path follows. 
         for (let push_dir of pos_dirs) {
@@ -723,22 +731,23 @@ function canPushTo(state, target, end_location, path) {
             //     continue;
             // }
 
-            new_state = simulate(state, path_to_side);
+            let new_state = simulate(state, path_to_side);
 
             // path to the end. 
-            path_pushing = a_star_pushing(new_state, target_loc, end_location);
+            let path_pushing;
+            [path_pushing, _] = a_star_pushing(new_state, target_loc, end_location);
             // if it fails, try the next push direction available
             if (path_pushing.length == 0) {
                 continue;
             }
             // if that succeeds, then you have a path. combine path_to_side, the first move, and path_pushing
-            running_path = path_to_side.concat([push_dir], path_pushing);
+            let running_path = path_to_side.concat(path_pushing);
             // return this path
             return running_path;
         }
     }
     // exit for loop and return [] since no path found
-    return []
+    return [];
 
     /* I did not use this at all. But the above should work. Leaving this here until the above is tested. 
     if (path.length > 0) {
@@ -785,8 +794,8 @@ function canPushTo(state, target, end_location, path) {
  */
 function isNoun(state, nouns) {
     const word_objs = accessGameState(state, "words");
-    const noun_words = ["baba", "bone", "flag", "wall", "grass", "lava", "rock", "floor", "keke", "goop", "love"]
-    noun_objs = word_objs.filter((w) => noun_words.includes(w.name))
+    const noun_words = ["baba", "bone", "flag", "wall", "grass", "lava", "rock", "floor", "keke", "goop", "love"];
+    let noun_objs = word_objs.filter((w) => noun_words.includes(w.name));
 
     if (nouns.length > 0) {
         nouns = nouns.filter((n) => noun_objs.includes(n));
@@ -805,8 +814,8 @@ function isNoun(state, nouns) {
  */
 function isConnector(state, connectors) {
     const word_objs = accessGameState(state, "words");
-    const connector_words = ["is"]
-    connector_objs = word_objs.filter((w) => connector_words.includes(w.name))
+    const connector_words = ["is"];
+    let connector_objs = word_objs.filter((w) => connector_words.includes(w.name));
 
     if (connectors.length > 0) {
         connectors = connectors.filter((c) => connector_objs.includes(c));
@@ -825,8 +834,8 @@ function isConnector(state, connectors) {
  */
 function isProperty(state, properties) {
     const word_objs = accessGameState(state, "words");
-    const property_words = ["you", "win", "stop", "win", "push", "sink", "kill", "hot", "melt"]
-    property_objs = word_objs.filter((w) => property_words.includes(w.name))
+    const property_words = ["you", "win", "stop", "win", "push", "sink", "kill", "hot", "melt"];
+    let property_objs = word_objs.filter((w) => property_words.includes(w.name));
 
     if (properties.length > 0) {
         properties = properties.filter((p) => property_objs.includes(p));
@@ -852,5 +861,5 @@ module.exports = {
     canPushTo,
     isNoun,
     isConnector,
-    isProperty,
+    isProperty
 };

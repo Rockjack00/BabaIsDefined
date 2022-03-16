@@ -465,20 +465,25 @@ function get_node(q, dir) {
   throw new Error("ERROR: Expected one of direction 'up', 'down', 'left', or 'right', but got direction " + dir)
 }
 
-function push_turn_check(state, next_node) {
-  cur_node = next_node.parent
+function push_turn_check(state, cur_node) {
+  let next_node = cur_node.parent;
   // can push at beginning is done before getting here
-  if (cur_node == null) {
+  if ((cur_node == null) || (next_node == null) || (next_node.parent == null)) {
     return true;
   }
 
-  next_pos = next_node.get_pos();
-  cur_pos = cur_node.get_pos();
+
 
   // if current move and next move are different, check that you can path from current side to side for the next move.
-  if (next_node.move != cur_node.move) {
-    side_to_push = pushing_side(cur_pos, next_node.move);
-    path_to_side = a_star_avoid_push(state, cur_pos, side_to_push);
+  if (cur_node.move != next_node.move) {
+    // your current postition is the cur_node's parent's position
+    let cur_pos = cur_node.parent.get_pos();
+    // your next position is the cur_node's side position
+    let next_pos = cur_node.get_pos();
+    let side_to_push = pushing_side(next_pos, cur_node.move);
+
+    // path to the side
+    let [path_to_side, _] = a_star_avoid_push(state, cur_pos, side_to_push);
     return path_to_side.length != 0;
   }
   return true;
@@ -514,7 +519,7 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
 
     // b) pop q off the open list
     // TODO check this is actually popping
-    q = open_list[q_index]; // get node
+    let q = open_list[q_index]; // get node
     open_list.splice(q_index, 1); // remove node from list
 
     // c) generate q's 4 successors and set their 
