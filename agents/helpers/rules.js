@@ -291,9 +291,9 @@ function canDeactivateRule(state, rule) {
 
     }
 
-    // just return the first path for any word
+    // just return the first path for any word including the final push direction to deactivate the rule
     if (possibleDirs.length > 0) {
-      return possibleDirs[0].path;
+      return possibleDirs[0].path.concat(possibleDirs[0].direction);
     }
   }
 
