@@ -18,9 +18,9 @@ function solve_level(state) {
   let yous = isYou(state, []);
 
   /// DEBUG ///
-  flag_noun = state["words"][5];
-  path = canPushTo(state, flag_noun, new Position(5, 1), []);
-  console.log(path);
+  // flag_noun = state["words"][5];
+  // path = canPushTo(state, flag_noun, new Position(5, 1), []);
+  // console.log(path);
 
   // let deactivate_rules = canDeactivateRules(state, []);
   // console.log(deactivate_rules)
@@ -122,8 +122,8 @@ function solve_level(state) {
     return solutions[0].path;
   }
 
-  // Couldn't find winning path
-  return defaultSolve(state);
+  // couldn't find a path
+  return [];
 }
 
 /**
@@ -288,4 +288,4 @@ function defaultSolve(state) {
   return path.concat(solve_level(simulate(state, path)));
 }
 
-module.exports = { solve_level };
+module.exports = { solve_level, defaultSolve };
