@@ -364,6 +364,11 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing, 
   obstacles = add_to_dict(sinkers, obstacles);
   obstacles = add_to_dict(stoppables, obstacles);
 
+  // check that end position is not inside an obstacle.
+  if (end_pos.get_string() in obstacles) {
+    return [[], []];
+  }
+
 
   // const [x_bounds, y_bounds] = bounds(state)
 

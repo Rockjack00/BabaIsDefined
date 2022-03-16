@@ -1,6 +1,6 @@
 const { path } = require("express/lib/application");
 const { isEqual } = require("lodash");
-const { accessGameState, Position, simulate, static, bounds, atLocation, objectFilter } = require("./helpers");
+const { accessGameState, Position, simulate, static, bounds, atLocation, objectFilter, objectAtLocation } = require("./helpers");
 const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo, isWin } = require("./predicates");
 const simjs = require("../../js/simulation");
 
@@ -347,7 +347,7 @@ function generateRuleCandidateLocations(state, rule) {
   if (static(state, rule.connector)) {
     // if the noun is static, just give the remaining possibilities
     if (candidates.length > 0) {
-      return candidates.filter((c) => { return atLocation(state, rule.connector, c[1]) });
+      return candidates.filter((c) => { return objectAtLocation(rule.connector, c[1]) });
     }
 
     // horizontal

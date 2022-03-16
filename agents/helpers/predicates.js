@@ -650,6 +650,8 @@ function canPushInDirection(state, target, direction) {
  */
 function canPushTo(state, target, end_location) {
 
+    // TODO first check that end_location is not out_of_bounds or inside an obstacle. If so, return false.
+
     // let running_path;
 
     // first, do canPush to get initial pushable directions. 

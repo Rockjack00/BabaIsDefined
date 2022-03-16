@@ -305,7 +305,7 @@ function simulate_pos(start_loc, path) {
  * @param {*} state
  * @param {Object} object the object.
  * @param {Position} position the location to see if it lives there.
- * @returns {Boolean} true|false if the object is at the specified position
+ * @returns {Boolean} true|false if the object is the same at the specified position
  */
 function atLocation(state, object, position) {
   let obj_dict = add_to_dict(state["phys"], {});
@@ -316,7 +316,17 @@ function atLocation(state, object, position) {
   if (obj_at_pos == undefined) {
     return false;
   }
-  return (obj_at_pos["type"] == object["type"]) && (obj_at_pos["name"] == obj_at_pos["name"]);
+  return (obj_at_pos["type"] == object["type"]) && (obj_at_pos["name"] == object["name"]);
+}
+
+/**
+ * 
+ * @param {*} object 
+ * @param {*} position 
+ * @returns {Boolean} true|false if the exact object is at the specified position
+ */
+function objectAtLocation(object, position) {
+  return (object.x == position.x) && (object.y == position.y);
 }
 
 /**
@@ -366,5 +376,6 @@ module.exports = {
   objectFilter,
   pushing_side,
   state_equality,
-  simulate_pos
+  simulate_pos,
+  objectAtLocation
 };

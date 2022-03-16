@@ -1,6 +1,13 @@
 {
     "levels": [
         {
+            "id": "231",
+            "name": "Make flag is win",
+            "author": "Kormaican",
+            "ascii": "__________\n_Bwb..13._\n_1w......_\n_2w......_\n_ww..w..._\n_....F..._\n_W......._\n_1.f....._\n_6......._\n__________",
+            "solution": "dddddrurdruurluruldllrullddddd"
+        },
+        {
             "id": 10,
             "name": "Push To around Obstacle",
             "author": "Kormaican",
