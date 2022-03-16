@@ -1,6 +1,6 @@
 const { isYou, isWin, isReachable, isNoun, canPushTo, isConnector, isProperty } = require("./predicates");
 const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, canDeactivateRules, activeRules, getRules } = require("./rules");
-const { simulate, Position } = require("./helpers");
+const { simulate, copy_state, Position } = require("./helpers");
 const { makeSeq } = require("../random_AGENT");
 const simjs = require("../../js/simulation");
 const { validSolution } = require("../../js/exec");
@@ -219,12 +219,14 @@ function createWin(state, subject_nouns) {
  *                         Each object is of the form {you: <you>, win: <win>, path: <path>}
  */
 function changeableRulesSolve(state) {
-  let solutions = [];
+  let solutions = []
   // Can be replaced with one call to canChangeRules, but may be better to leave separated for now to debug
-  solutions.concat(singleRuleChangeSolve(state, canDeactivateRules(state, [])));
-  solutions.concat(singleRuleChangeSolve(state, canActivateRules(state, [])));
-  // TODO: change more than one rule at once
-  return solutions;
+  let deactivatable_rules = canDeactivateRules(state, [])
+  let deactivatable_solutions = singleRuleChangeSolve(state, deactivatable_rules)
+  solutions = solutions.concat(deactivatable_solutions)
+  //solutions.concat(singleRuleChangeSolve(state, canActivateRules(state, [])))
+  // TODO: change more than one rule at once (combinations of rules?)
+  return solutions
 }
 
 /**
@@ -235,18 +237,18 @@ function changeableRulesSolve(state) {
  *                         Each object is of the form {you: <you>, win: <win>, path: <path>}
  */
 function singleRuleChangeSolve(state, rules) {
-  solutions = [];
+  let solutions = []
   // There are no deactivatable rules
   if (rules.length == 0) {
     return [];
   }
 
   // See if any single rule changed to produce a winning path
-  newState = new_state(state);
-  for (let rule of rules) {
+  var newState = copy_state(state)
+  for (rule of rules) {
     // Change rule and get the new state
-    let path = rule.path;
-    let newState = simulate(newState, path);
+    let path = rule.path
+    newState = simulate(newState, path)
 
     // Find if there is a solution now after changing the rule
     let yous = isYou(newState, []);
@@ -261,7 +263,7 @@ function singleRuleChangeSolve(state, rules) {
     }
 
     // Remember to reset the state to the original
-    newState = new_state(state);
+    newState = copy_state(state)
   }
   return solutions;
 }

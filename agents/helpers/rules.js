@@ -148,7 +148,6 @@ function canChangeRules(state, rules) {
 
   // next get all the rules that can be deactivated
   return outList.concat(canDeactivateRules(state, rules));
-
 }
 
 /**
@@ -254,7 +253,7 @@ function canDeactivateRules(state, rules) {
     let deactivatePath = canDeactivateRule(state, rule);
 
     if (deactivatePath.length > 0) {
-      outList.push({ "rule": rule, "path": path });
+      outList.push({ "rule": rule, "path": deactivatePath });
     }
   });
 
@@ -292,9 +291,9 @@ function canDeactivateRule(state, rule) {
       possibleDirs = canPush(state, pushableWord, ["up", "down"]);
     }
 
-    // just return the first path for any word
+    // just return the first path for any word including the final push direction to deactivate the rule
     if (possibleDirs.length > 0) {
-      return possibleDirs[0].path;
+      return possibleDirs[0].path.concat(possibleDirs[0].direction);
     }
   }
 
