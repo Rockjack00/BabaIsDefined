@@ -16,7 +16,7 @@ var MAX_SEQ = 50;
  * @return {array} a winning path.
  */
 function solve_level(state) {
-  var yous = isYou(state, []);
+  let yous = isYou(state, []);
 
   /// DEBUG ///
   // flag_noun = state["words"][5];
@@ -49,10 +49,10 @@ function solve_level(state) {
     }
   }
 
-  var wins = isWin(state, []);
+  let wins = isWin(state, []);
 
   /* Are any objects that are WIN isReachable by any objects that are YOU? */
-  var solutions = getPaths(state, yous, wins);
+  let solutions = getPaths(state, yous, wins);
 
   // just return the first one
   if (solutions.length > 0) {
@@ -79,15 +79,15 @@ function solve_level(state) {
 
   // Are there any solutions that just require the agent to make a "win" rule?
   // assert win returns a list of rules that can be made and the path to make them
-  for (assertable in assertWin(state, [])) {
+    for (let assertable of assertWin(state, [])) {
 
-    var new_state = simulate(state, assertable.path);
-    var new_yous = isYou(new_state, []);
-    var new_wins = isWin(new_state, []);
-    var paths = getPaths(new_state, new_yous, new_wins);
+    let new_state = simulate(state, assertable.path);
+    let new_yous = isYou(new_state, []);
+    let new_wins = isWin(new_state, []);
+    let paths = getPaths(new_state, new_yous, new_wins);
 
     if (paths.length > 0) {
-      var full_path = assertable.path.concat(paths[0].path); // concat assertable.path and paths[0].path
+      let full_path = assertable.path.concat(paths[0].path); // concat assertable.path and paths[0].path
       if (EAGER) {
         return full_path;
       }
@@ -99,14 +99,14 @@ function solve_level(state) {
   }
 
   // Are there any solutions that just require the agent to change one object into another object type that is already "win"?
-  for (assertable in createWin(state, [])) {
-    var new_state = simulate(state, assertable.path);
-    var new_yous = isYou(new_state, []);
-    var new_wins = isWin(new_state, []);
-    var paths = getPaths(new_state, new_yous, new_wins);
+  for (let assertable of createWin(state, [])) {
+    let new_state = simulate(state, assertable.path);
+    let new_yous = isYou(new_state, []);
+    let new_wins = isWin(new_state, []);
+    let paths = getPaths(new_state, new_yous, new_wins);
 
     if (paths.length > 0) {
-      var full_path = assertable.path.concat(paths[0].path); // concat assertable.path and paths[0].path
+      let full_path = assertable.path.concat(paths[0].path); // concat assertable.path and paths[0].path
       if (EAGER) {
         return full_path;
       }
@@ -136,7 +136,7 @@ function solve_level(state) {
  */
 function getPaths(state, yous, wins) {
   // find all the isReachable paths from to yous and wins
-  var solutions = [];
+  let solutions = [];
   for (let y of yous) {
     for (let w of wins) {
       p = isReachable(state, y, w, []);
@@ -191,7 +191,7 @@ function createWin(state, subject_nouns) {
   let win_nouns = []
   let win_connectors = []
   let has_win_property = []
-  for (rule of win_rules) {
+  for (let rule of win_rules) {
     win_nouns.push(rule.noun);
     win_connectors.push(rule.connector)
     has_win_property.push(rule.noun.name);
@@ -218,7 +218,7 @@ function createWin(state, subject_nouns) {
  * @return {array} a set of winning paths.
  */
 function changeableRulesSolve(state) {
-  var solutions = []
+  let solutions = []
   // Can be replaced with one call to canChangeRules, but may be better to leave separated for now to debug
   solutions.concat(singleRuleChangeSolve(state, canDeactivateRules(state, [])))
   solutions.concat(singleRuleChangeSolve(state, canActivateRules(state, [])))
@@ -240,17 +240,17 @@ function singleRuleChangeSolve(state, rules) {
 
   // See if any single rule changed to produce a winning path
   newState = new_state(state)
-  for (rule of rules) {
+  for (let rule of rules) {
     // Change rule and get the new state
     let path = rule.path
     let newState = simulate(newState, path)
 
     // Find if there is a solution now after changing the rule
-    var yous = isYou(newState, []);
-    var wins = isWin(newState, []);
-    var paths = getPaths(newState, yous, wins)
+    let yous = isYou(newState, []);
+    let wins = isWin(newState, []);
+    let paths = getPaths(newState, yous, wins)
     if (paths.length > 0) {
-      var full_path = path.concat(paths[0].path);
+      let full_path = path.concat(paths[0].path);
       if (EAGER) {
         return full_path;
       }
@@ -271,7 +271,7 @@ function singleRuleChangeSolve(state, rules) {
  */
 function defaultSolve(state) {
   console.log("Could not find winning path.\n Default behavior: attempting random steps.")
-  var path = makeSeq()
+  let path = makeSeq()
   if (path.length == 0) {
     console.log("Unable to solve this level.")
     return []
