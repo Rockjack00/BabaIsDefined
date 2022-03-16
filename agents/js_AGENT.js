@@ -3,7 +3,7 @@
 // Code by Milk
 
 //get imports (NODEJS)
-const { solve_level, default_solve } = require("./helpers/strategy");
+const { solve_level } = require("./helpers/strategy");
 
 let possActions = ["space", "right", "up", "left", "down"];
 
