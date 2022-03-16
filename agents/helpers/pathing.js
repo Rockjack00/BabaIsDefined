@@ -288,7 +288,7 @@ function a_star_avoid_push(state, start_pos, end_pos) {
 function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
 
   // first, check that the start and destination are valid.
-  if (!game_bound_check(state, end_pos) || !game_bound_check(start_pos)) {
+  if (!game_bound_check(state, end_pos) || !game_bound_check(state, start_pos)) {
     return [[], []];
   }
 
