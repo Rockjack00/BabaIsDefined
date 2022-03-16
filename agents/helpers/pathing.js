@@ -286,6 +286,12 @@ function a_star_avoid_push(state, start_pos, end_pos) {
  * @returns {[Array, Array]} [path_moves, path_locations] 
  */
 function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
+
+  // first, check that the start and destination are valid.
+  if (!game_bound_check(state, end_pos) || !game_bound_check(start_pos)) {
+    return [[], []];
+  }
+
   // first, check that you are not already on the end location.
   if (end_pos.get_string() == start_pos.get_string()) {
     return [["space"], [start_pos.get_dir("space")]];
