@@ -90,7 +90,7 @@ function solve_level(state) {
       if (EAGER) {
         return full_path;
       }
-      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path });
     }
   }
   if (solutions.length > 0) {
@@ -109,7 +109,7 @@ function solve_level(state) {
       if (EAGER) {
         return full_path;
       }
-      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path });
     }
   }
   if (solutions.length > 0) {
@@ -119,7 +119,7 @@ function solve_level(state) {
   // Are there solutions that can be found by changing any of the rules?
   solutions = changeableRulesSolve(state)
   if (solutions.length > 0) {
-    return solutions[0].path
+    return solutions[0].path;
   }
 
   // Couldn't find winning path
@@ -219,12 +219,12 @@ function createWin(state, subject_nouns) {
  *                         Each object is of the form {you: <you>, win: <win>, path: <path>}
  */
 function changeableRulesSolve(state) {
-  let solutions = []
+  let solutions = [];
   // Can be replaced with one call to canChangeRules, but may be better to leave separated for now to debug
-  solutions.concat(singleRuleChangeSolve(state, canDeactivateRules(state, [])))
-  solutions.concat(singleRuleChangeSolve(state, canActivateRules(state, [])))
+  solutions.concat(singleRuleChangeSolve(state, canDeactivateRules(state, [])));
+  solutions.concat(singleRuleChangeSolve(state, canActivateRules(state, [])));
   // TODO: change more than one rule at once
-  return solutions
+  return solutions;
 }
 
 /**
@@ -235,35 +235,35 @@ function changeableRulesSolve(state) {
  *                         Each object is of the form {you: <you>, win: <win>, path: <path>}
  */
 function singleRuleChangeSolve(state, rules) {
-  solutions = []
+  solutions = [];
   // There are no deactivatable rules
   if (rules.length == 0) {
-    return []
+    return [];
   }
 
   // See if any single rule changed to produce a winning path
-  newState = new_state(state)
+  newState = new_state(state);
   for (let rule of rules) {
     // Change rule and get the new state
-    let path = rule.path
-    let newState = simulate(newState, path)
+    let path = rule.path;
+    let newState = simulate(newState, path);
 
     // Find if there is a solution now after changing the rule
     let yous = isYou(newState, []);
     let wins = isWin(newState, []);
-    let paths = getPaths(newState, yous, wins)
+    let paths = getPaths(newState, yous, wins);
     if (paths.length > 0) {
       let full_path = path.concat(paths[0].path);
       if (EAGER) {
         return full_path;
       }
-      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path });
     }
 
     // Remember to reset the state to the original
-    newState = new_state(state)
+    newState = new_state(state);
   }
-  return solutions
+  return solutions;
 }
 
 /**
@@ -273,13 +273,13 @@ function singleRuleChangeSolve(state, rules) {
  * @returns {Array<String>} a winning path OR calls solve_level again with the updated state.
  */
 function defaultSolve(state) {
-  console.log("Could not find winning path.\n Default behavior: attempting random steps.")
-  let path = makeSeq()
+  console.log("Could not find winning path.\n Default behavior: attempting random steps.");
+  let path = makeSeq();
   if (path.length == 0) {
-    console.log("Unable to solve this level.")
-    return []
+    console.log("Unable to solve this level.");
+    return [];
   } else if (validSolution(path, simjs.showState(state))) {
-    return path
+    return path;
   } else { // path to new state
     for (let i = 0; i < path.length; i++) {
       // iterate over game state
@@ -287,7 +287,7 @@ function defaultSolve(state) {
       state = res['next_state'];
     }
   }
-  return solve_level(state) // try to solve level with new state
+  return solve_level(state); // try to solve level with new state
 }
 
 module.exports = { solve_level };
