@@ -169,12 +169,12 @@ function assertWin(state, nouns) {
   if (nouns.length == 0) {
     property_rules = generatePropertyRules(state, [], []);
   } else {
-    let win_words = isProperty(state, []).filter((p) => p.name = "win");
+    let win_words = isProperty(state, []).filter((p) => p.name == "win");
     let connectors = isConnector(state, []);
     property_rules = generatePropertyRules(state, nouns.concat(win_words, connectors));
   }
 
-  let win_rules = property_rules.filter((r) => r.property.name = "win");
+  let win_rules = property_rules.filter((r) => r.property.name == "win");
   return canActivateRules(state, win_rules);
 }
 
@@ -187,7 +187,7 @@ function assertWin(state, nouns) {
 *                         Objects in this list are of the form {rule: <Rule>, path: <path>} 
 */
 function createWin(state, subject_nouns) {
-  let win_rules = activeRules(state, []).filter((r) => r.property.name = "win");
+  let win_rules = activeRules(state, []).filter((r) => r.property.name == "win");
   let win_nouns = [];
   let win_connectors = [];
   let has_win_property = [];
