@@ -310,7 +310,7 @@ function neighbors(state, target) {
  * @description Simulate the path based on the current path and return the simulated state
  * @param {State} state the starting state
  * @param {Array} path the list of steps to step the simulation through
- * @returns 
+ * @returns the new state after the path is taken
  */
 function simulate(state, path) {
   // TODO: change this to simjs.newState() - its probably a lot faster
