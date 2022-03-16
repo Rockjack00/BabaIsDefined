@@ -148,7 +148,6 @@ function canChangeRules(state, rules) {
 
   // next get all the rules that can be deactivated
   return outList.concat(canDeactivateRules(state, rules));
-
 }
 
 /**
@@ -253,7 +252,7 @@ function canDeactivateRules(state, rules) {
     let deactivatePath = canDeactivateRule(state, rule);
 
     if (deactivatePath.length > 0) {
-      outList.push({ "rule": rule, "path": path })
+      outList.push({ "rule": rule, "path": deactivatePath })
     };
   })
 
