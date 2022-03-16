@@ -156,7 +156,8 @@ function canChangeRules(state, rules) {
  *              If rules is empty, filter from all of the possible rules in this level.
  * @param {state} state the current game state.
  * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filter out all rules that can be activated from the current game state .
+ * @return {array} filter out all rules that can be activated from the current game state.
+ *                 Objects in this list are of the form {rule: <Rule>, path: <path>} 
  */
 function canActivateRules(state, rules) {
 

@@ -589,6 +589,8 @@ function canPush(state, target, directions) {
     return outList;
 }
 
+// TODO: add the last pushing action to the path
+
 /**
  * @description Get the path to push a target in a direction
  * @param {State} state the current game state.
