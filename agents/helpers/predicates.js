@@ -726,13 +726,13 @@ function canPushTo(state, target, end_location, path) {
             new_state = simulate(state, path_to_side);
 
             // path to the end. 
-            path_pushing = a_star_pushing(new_state, target_loc, end_location);
+            [path_pushing, _] = a_star_pushing(new_state, target_loc, end_location);
             // if it fails, try the next push direction available
             if (path_pushing.length == 0) {
                 continue;
             }
             // if that succeeds, then you have a path. combine path_to_side, the first move, and path_pushing
-            running_path = path_to_side.concat([push_dir], path_pushing);
+            running_path = path_to_side.concat(path_pushing);
             // return this path
             return running_path;
         }

@@ -1,6 +1,6 @@
-const { isYou, isWin, isReachable, isNoun } = require("./predicates");
+const { isYou, isWin, isReachable, isNoun, canPushTo, isConnector, isProperty } = require("./predicates");
 const { generateRules, generatePropertyRules, generateNounRules, canChangeRules, canActivateRules, canDeactivateRules, activeRules, getRules } = require("./rules");
-const { simulate } = require("./helpers");
+const { simulate, Position } = require("./helpers");
 const { makeSeq } = require("../random_AGENT");
 const simjs = require("../../js/simulation");
 const { validSolution } = require("../../js/exec");
@@ -19,6 +19,9 @@ function solve_level(state) {
   var yous = isYou(state, []);
 
   /// DEBUG ///
+  // flag_noun = state["words"][5];
+  // path = canPushTo(state, flag_noun, new Position(5, 1), []);
+  // console.log(path);
 
   // let deactivate_rules = canDeactivateRules(state, []);
   // console.log(deactivate_rules)
@@ -54,7 +57,7 @@ function solve_level(state) {
   // just return the first one
   if (solutions.length > 0) {
     return solutions[0].path;
-  } 
+  }
 
   /* Are any objects that can be made WIN isReachable by any objects that are YOU? */
   // TODO
@@ -75,46 +78,46 @@ function solve_level(state) {
   //   }
 
 
-    //assert win returns a list of rules that can be made and the path to make them
-    for (assertable in assertWin(state, [])) {
-   
-        var new_state = simulate(state, assertable.path);
-        var new_yous = isYou(new_state, []);
-        var new_wins = isWin(new_state, []);
-        var paths = getPaths(new_state, new_yous, new_wins);
+  //assert win returns a list of rules that can be made and the path to make them
+  for (assertable in assertWin(state, [])) {
 
-        if (paths.length > 0) {
-            var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
-            if (EAGER) {
-                return full_path;
-            }
-            solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path})
-        }
+    var new_state = simulate(state, assertable.path);
+    var new_yous = isYou(new_state, []);
+    var new_wins = isWin(new_state, []);
+    var paths = getPaths(new_state, new_yous, new_wins);
+
+    if (paths.length > 0) {
+      var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
+      if (EAGER) {
+        return full_path;
+      }
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
     }
-    if (solutions.length > 0) {
-        return solutions[0].path;
-    } 
+  }
+  if (solutions.length > 0) {
+    return solutions[0].path;
+  }
 
-    for (assertable in createWin(state, [])) {
-        var new_state = simulate(state, assertable.path);
-        var new_yous = isYou(new_state, []);
-        var new_wins = isWin(new_state, []);
-        var paths = getPaths(new_state, new_yous, new_wins);
+  for (assertable in createWin(state, [])) {
+    var new_state = simulate(state, assertable.path);
+    var new_yous = isYou(new_state, []);
+    var new_wins = isWin(new_state, []);
+    var paths = getPaths(new_state, new_yous, new_wins);
 
-        if (paths.length > 0) {
-            var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
-            if (EAGER) {
-                return full_path;
-            }
-            solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
-        }
+    if (paths.length > 0) {
+      var full_path = assertable.path.concat(paths[0].path);//concat assertable.path and paths[0].path
+      if (EAGER) {
+        return full_path;
+      }
+      solutions.push({ you: paths[0].you, win: paths[0].win, path: full_path })
     }
-    if (solutions.length > 0) {
-        return solutions[0].path;
-    } 
+  }
+  if (solutions.length > 0) {
+    return solutions[0].path;
+  }
 
-    /* Couldn't find winning path */
-    return default_solve(state);
+  /* Couldn't find winning path */
+  return default_solve(state);
 }
 
 /**
@@ -124,27 +127,26 @@ function solve_level(state) {
  * @param {array} wins an array of objects we are trying to reach.
  * @return {array} a set of paths.
  */
-function getPaths(state, yous, wins)
-{
-    // find all the isReachable paths from to yous and wins
-    var solutions = [];
-    for (let y of yous) {
-        for (let w of wins) {
-            p = isReachable(state, y, w, []);
+function getPaths(state, yous, wins) {
+  // find all the isReachable paths from to yous and wins
+  var solutions = [];
+  for (let y of yous) {
+    for (let w of wins) {
+      p = isReachable(state, y, w, []);
 
-            if (p.length > 0) {
-                console.log(
-                    `\t{ ${y.name} } can reach { ${w.name
-                    } } by taking the path { ${simjs.miniSol(p)} }.`
-                );
-                solutions.push({ you: y, win: w, path: p });
-                if (EAGER) {
-                    return solutions;
-                }
-            }
+      if (p.length > 0) {
+        console.log(
+          `\t{ ${y.name} } can reach { ${w.name
+          } } by taking the path { ${simjs.miniSol(p)} }.`
+        );
+        solutions.push({ you: y, win: w, path: p });
+        if (EAGER) {
+          return solutions;
         }
+      }
     }
-    return solutions;
+  }
+  return solutions;
 }
 
 /**
