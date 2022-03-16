@@ -9,6 +9,7 @@ var searched = {};
 
 class Node {
   /**
+   * @description A Node constructor, for use in A* pathing.
    * 
    * @param {Position} position 
    * @param {int} f 
@@ -52,22 +53,26 @@ class Node {
 /**
  * @deprecated
  * 
+ * @description A DFS floodfill pathing algoritm.
+ * 
  * @param {*} state Game state.
  * @param {*} start_obj Start object for pathing.
  * @param {*} end_obj Target object for pathing.
  * @returns {Array} Path from cur_location to end_pos.
  */
 function floodfill_reachable(state, start_obj, end_obj) {
-  start_pos = new Position(start_obj.x, start_obj.y);
-  end_pos = new Position(end_obj.x, end_obj.y);
+  let start_pos = new Position(start_obj.x, start_obj.y);
+  let end_pos = new Position(end_obj.x, end_obj.y);
 
-  path = floodfill(start_pos, end_pos, state);
+  let path = floodfill(start_pos, end_pos, state);
 
   return path;
 }
 
 /**
  * @deprecated
+ * 
+ * @description The main setup setup for floodfill pathing.
  * 
  * @param {*} state Game state.
  * @param {*} start_obj Start object for pathing.
@@ -76,11 +81,11 @@ function floodfill_reachable(state, start_obj, end_obj) {
  */
 function floodfill(start_pos, end_pos, state) {
   // only runs for actual moves. Ignores "space" which is "wait"
-  range = 4;
+  let range = 4;
 
-  move_actions = possActions.slice(1, range + 1);
+  let move_actions = possActions.slice(1, range + 1);
 
-  searched = {};
+  let searched = {};
 
   //for each killable:
   // dict[killable,x,killable.y] = killable.
@@ -90,7 +95,7 @@ function floodfill(start_pos, end_pos, state) {
   // addtional things to avoid to keep it simple: pushables
 
   // make empty dictionary for "obstacles"
-  var obstacles = {};
+  let obstacles = {};
 
   // death things
   const killers = accessGameState(state, "killers");
@@ -109,7 +114,7 @@ function floodfill(start_pos, end_pos, state) {
   obstacles = add_to_dict(words, obstacles);
 
   const [x_bounds, y_bounds] = bounds(state);
-  path = ff_recur(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, []);
+  let path = ff_recur(start_pos, end_pos, obstacles, move_actions, x_bounds, y_bounds, [], searched);
   if (path == null) {
     return [];
   }
@@ -126,6 +131,8 @@ function floodfill(start_pos, end_pos, state) {
 /**
  * @deprecated
  * 
+ * @description The recursive floodfill solver.
+ * 
  * @param {*} cur_location 
  * @param {*} end_pos 
  * @param {*} obstacles 
@@ -135,7 +142,9 @@ function floodfill(start_pos, end_pos, state) {
  * @param {*} path 
  * @returns {Array} Path from cur_location to end_pos.
  */
-function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bounds, path) {
+function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bounds, path, searched) {
+  let next_space, next_move;
+
   for (let i = 0; i < move_actions.length; ++i) {
     switch (move_actions[i]) {
       case "right":
@@ -154,12 +163,10 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
         next_space = cur_location.get_dn();
         next_move = "down";
         break;
-      default:
-        next_space = null;
     }
 
     // if an obstacle DOES NOT exist, i.e. there is NOT a key in the "obstacles" for the next location
-    next_str = next_space.get_string();
+    let next_str = next_space.get_string();
     if (!(next_str in obstacles) && !(next_str in searched) &&
       game_bound_check(state, next_space)) {
       path.push(next_move);
@@ -192,40 +199,24 @@ function ff_recur(cur_location, end_pos, obstacles, move_actions, x_bounds, y_bo
           end_pos,
           obstacles,
           move_actions, x_bounds, y_bounds,
-          path.slice() // to send a copy of the path, not the same path object. Javascript is annoying.
+          path.slice(), // to send a copy of the path, not the same path object. Javascript is annoying.
+          searched
         );
 
         if (ff_return != null) {
           return ff_return;
         }
-
-
       }
     }
-
-    // if (movable_spcs.includes(next_space) && !(searched.includes(next_space))){
-    //     path.push(next_space);
-    //     searched.push(next_space);
-    //     if(goal_spcs.includes(next_space)){
-    //         return path;
-    //     }
-    //     else{
-    //         ff_return = ff_recur(next_space, movable_spcs, searched,move_actions);
-
-    //         if (ff_return != null){
-    //             return ff_return;
-    //         }
-
-    //     }
-    // }
   }
-
   // if loop is exited, no paths were found this way and a dead end was reached.
   return null;
 }
 
 
 /**
+ * 
+ * @description Boolean check if the space is outside the game boundaries.
  * 
  * @param {*} state 
  * @param {Position} next_space 
@@ -238,9 +229,10 @@ function game_bound_check(state, next_space) {
     (next_space.x > 0) && (next_space.y > 0);
 }
 
-// A* Pathing
-// psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
 /**
+ * 
+ * @description Primary A* pathing caller. 
+ * psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used.
  * 
  * @param {*} state 
  * @param {*} start_obj 
@@ -250,13 +242,15 @@ function game_bound_check(state, next_space) {
  * @returns {[Array, Array]} [path_moves, path_locations] 
  */
 function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these) {
-  start_pos = new Position(start_obj.x, start_obj.y);
-  end_pos = new Position(end_obj.x, end_obj.y);
+  let start_pos = new Position(start_obj.x, start_obj.y);
+  let end_pos = new Position(end_obj.x, end_obj.y);
 
   return a_star(start_pos, end_pos, state, push_are_obst, avoid_these, false);
 }
 
 /**
+ * 
+ * @description Caller for A* pathing for pushing.
  * 
  * @param {*} state 
  * @param {Position} start_pos 
@@ -268,6 +262,8 @@ function a_star_pushing(state, start_pos, end_pos) {
 }
 
 /**
+ * 
+ * @description Caller for A* pathing, that will avoid all pushables.
  * 
  * @param {*} state 
  * @param {Position} start_pos 
@@ -296,11 +292,11 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   }
 
   // only runs for actual moves. Ignores "space" which is "wait"
-  range = 4;
+  let range = 4;
 
-  move_actions = possActions.slice(1, range + 1);
+  let move_actions = possActions.slice(1, range + 1);
 
-  searched = {};
+  // let searched = {};
 
   //for each killable:
   // dict[killable,x,killable.y] = killable.
@@ -310,7 +306,8 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   // addtional things to avoid to keep it simple: pushables
 
   // make empty dictionary for "obstacles"
-  var obstacles = {};
+  let obstacles = {};
+  let push_dict = {};
 
   // death things
   const killers = accessGameState(state, "killers");
@@ -323,11 +320,10 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
     obstacles = add_to_dict(pushables, obstacles);
   }
   else {
-    push_dict = {}
     push_dict = add_to_dict(pushables, push_dict);
 
     // add avoid_these to obstacle  
-    for (avoid_this of avoid_these) {
+    for (let avoid_this of avoid_these) {
       avoid_str = avoid_this.get_string();
       obstacles[avoid_str] = push_dict[avoid_str];
     }
@@ -342,12 +338,16 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
 
   // const [x_bounds, y_bounds] = bounds(state)
 
+  let path_end_node;
+
   if (pushing) {
     path_end_node = a_star_pushed_solver(state, start_pos, end_pos, obstacles)
   }
   else {
     path_end_node = a_star_solver(start_pos, end_pos, obstacles, move_actions, state, []);
   }
+
+  let path_moves, path_locations;
 
   if (path_end_node == null) {
     path_moves = [];
@@ -366,6 +366,8 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
 }
 
 /**
+ * 
+ * @description Takes in a Node object from A*, and recursively returns the moves, starting from the last parent.
  * 
  * @param {Node} cur_node This is the starting node to build the path.
  * @param {boolean} pushing Determines if this is the pushing variation of A*.
@@ -391,7 +393,7 @@ function get_moves(cur_node, pushing, state) {
       // start is prev_node, one in opposite direction of prev_move
       let start = pushing_side(prev_node.position, prev_move);
 
-      cur_state = simulate(state, moves);
+      let cur_state = simulate(state, moves);
       let [path_to_side, _] = a_star_avoid_push(cur_state, start, target);
       moves = moves.concat(path_to_side);
     }
@@ -405,6 +407,8 @@ function get_moves(cur_node, pushing, state) {
 
 /**
  * 
+ * @description Takes in a Node object from A*, and recursively returns the Positions, starting from the last parent.
+ * 
  * @param {Node} node 
  * @returns {Array} The path generated by A*, as a list of Positions.
  */
@@ -413,7 +417,7 @@ function get_move_positions(node) {
     return [];
   }
 
-  var moves = get_move_positions(node.parent);
+  let moves = get_move_positions(node.parent);
   moves.push(node.get_pos());
 
   return moves;
@@ -421,13 +425,15 @@ function get_move_positions(node) {
 
 /**
  * 
+ * @description Calculates the manhattan distance between a start and end position.
+ * 
  * @param {Position} start 
  * @param {Position} end 
  * @returns The manhattan distance betwen two locations on the game board.
  */
 function get_manhattan(start, end) {
-  x_dist = Math.abs(start.x - end.x);
-  y_dist = Math.abs(start.y - end.y);
+  let x_dist = Math.abs(start.x - end.x);
+  let y_dist = Math.abs(start.y - end.y);
   return x_dist + y_dist;
 }
 
@@ -462,7 +468,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
     let prev_f = open_list[0].get_f();
     let q_index = 0;
     for (let i = 1; i < open_list.length; ++i) {
-      cur_f = open_list[i].get_f();
+      let cur_f = open_list[i].get_f();
       if (cur_f < prev_f) {
         q_index = i;
       }
@@ -477,10 +483,10 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
     // for refence: const possActions = ["space", "right", "up", "left", "down"];
     let successors = [];
     let dirs = ["up", "down", "left", "right"]
-    for (dir of dirs) {
-      next_node = get_node(q, dir)
-      next_space = next_node.get_pos();
-      next_str = next_node.get_pos().get_string();
+    for (let dir of dirs) {
+      let next_node = get_node(q, dir)
+      let next_space = next_node.get_pos();
+      let next_str = next_node.get_pos().get_string();
       if (!(next_str in obstacles) &&
         game_bound_check(state, next_space)) {
         successors.push(next_node);
@@ -528,7 +534,7 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
       //         successor  is in the CLOSED list which has
       //         a lower f than successor, skip this successor
       for (let i = 0; i < closed_list.length; ++i) {
-        list_node = closed_list[i];
+        let list_node = closed_list[i];
         if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
           (list_node.get_f() < succ_node.get_f())) {
           skip_s = true;
@@ -553,6 +559,8 @@ function a_star_solver(cur_location, end_pos, obstacles, move_actions, state, pa
 
 /**
  * 
+ * @description Takes a parent and move direction, and returns a new Node for use in A*.
+ * 
  * @param {Node} q 
  * @param {string} dir 
  * @returns {Node} A new Node object for the direction and parent node.
@@ -576,7 +584,7 @@ function get_node(q, dir) {
  * 
  * @param {*} state 
  * @param {Node} next_node 
- * @returns 
+ * @returns {boolean}
  */
 function push_turn_check(state, next_node) {
   let prev_node = next_node.parent; // prev_node is one step behind next_node
@@ -602,11 +610,10 @@ function push_turn_check(state, next_node) {
   return true;
 }
 
-// psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
-// this A* is for objects being pushed by YOU. 
-// The key is to make sure that if you turn, YOU can get to the opposite side to push from.
 /**
- * @description Pushing version of A* pathing.
+ * @description The pushing version of the A* pathing solver.
+ * The key is to make sure that if you turn, YOU can get to the opposite side to push from.
+ * psuedo-code from https://www.geeksforgeeks.org/a-search-algorithm/ used. 
  * 
  * @param {*} state 
  * @param {Position} cur_location 
@@ -634,7 +641,7 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
     let prev_f = open_list[0].get_f();
     let q_index = 0;
     for (let i = 1; i < open_list.length; ++i) {
-      cur_f = open_list[i].get_f();
+      let cur_f = open_list[i].get_f();
       if (cur_f < prev_f) {
         q_index = i;
       }
@@ -653,7 +660,7 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
 
     let successors = [];
     let dirs = ["up", "down", "left", "right"]
-    for (dir of dirs) {
+    for (let dir of dirs) {
       let next_node = get_node(q, dir)
       let next_space = next_node.get_pos();
       let next_str = next_node.get_pos().get_string();
@@ -687,7 +694,7 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
       //     iii) if a node with the same position as 
       //         successor is in the OPEN list which has a 
       //        lower f than successor, skip this successor
-      skip_s = false;
+      let skip_s = false;
       for (let i = 0; i < open_list.length; ++i) {
         list_node = open_list[i];
         if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
@@ -704,7 +711,7 @@ function a_star_pushed_solver(state, cur_location, end_pos, obstacles, first_mov
       //         successor  is in the CLOSED list which has
       //         a lower f than successor, skip this successor
       for (let i = 0; i < closed_list.length; ++i) {
-        list_node = closed_list[i];
+        let list_node = closed_list[i];
         if ((succ_node.get_pos().get_string() == list_node.get_pos().get_string()) &&
           (list_node.get_f() < succ_node.get_f())) {
           skip_s = true;
