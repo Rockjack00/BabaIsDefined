@@ -302,12 +302,21 @@ function simulate_pos(start_loc, path) {
 
 /**
  * check if an object is at the specified location.
+ * @param {*} state
  * @param {Object} object the object.
  * @param {Position} position the location to see if it lives there.
  * @returns {Boolean} true|false if the object is at the specified position
  */
-function atLocation(object, position) {
-  return object.x == position.x && object.y == position.y
+function atLocation(state, object, position) {
+  let obj_dict = add_to_dict(state["phys"], {});
+  obj_dict = add_to_dict(state["words"], obj_dict);
+
+  let obj_at_pos = obj_dict[position.get_string()];
+
+  if (obj_at_pos == undefined) {
+    return false;
+  }
+  return (obj_at_pos["type"] == object["type"]) && (obj_at_pos["name"] == obj_at_pos["name"]);
 }
 
 /**

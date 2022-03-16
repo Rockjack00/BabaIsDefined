@@ -245,7 +245,7 @@ function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these)
   let start_pos = new Position(start_obj.x, start_obj.y);
   let end_pos = new Position(end_obj.x, end_obj.y);
 
-  return a_star(start_pos, end_pos, state, push_are_obst, avoid_these, false);
+  return a_star(start_pos, end_pos, state, push_are_obst, avoid_these, false, true);
 }
 
 /**
@@ -258,7 +258,11 @@ function a_star_reachable(state, start_obj, end_obj, push_are_obst, avoid_these)
  * @returns {[Array, Array]} [path_moves, path_locations] 
  */
 function a_star_pushing(state, start_pos, end_pos) {
-  return a_star(start_pos, end_pos, state, true, [], true);
+  return a_star(start_pos, end_pos, state, true, [], true, true);
+}
+
+function a_star_deactivate(state, start_pos, end_pos) {
+  return a_star(start_pos, end_pos, state, true, [], true, false);
 }
 
 /**
@@ -271,7 +275,7 @@ function a_star_pushing(state, start_pos, end_pos) {
  * @returns {[Array, Array]} [path_moves, path_locations] 
  */
 function a_star_avoid_push(state, start_pos, end_pos) {
-  return a_star(start_pos, end_pos, state, true, [], false);
+  return a_star(start_pos, end_pos, state, true, [], false, true);
 }
 
 /**
@@ -285,7 +289,7 @@ function a_star_avoid_push(state, start_pos, end_pos) {
  * @param {boolean} pushing 
  * @returns {[Array, Array]} [path_moves, path_locations] 
  */
-function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) {
+function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing, rules_are_obst) {
 
   // first, check that the start and destination are valid.
   if (!game_bound_check(state, end_pos) || !game_bound_check(state, start_pos)) {
@@ -322,11 +326,30 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
   const stoppables = accessGameState(state, "stoppables");
   // additional things to avoid
   const pushables = accessGameState(state, "pushables");
+  // avoid rules that are in use if rules_are_obst is true
+  const rule_objs = accessGameState(state, "rule_objs");
+
+  const words = accessGameState(state, 'words');
+
+  if (rules_are_obst) {
+    obstacles = add_to_dict(rule_objs, obstacles);
+  }
+
+  let unsused_words = [];
+  let word_dict = add_to_dict(words, {});
+  for (let word_i in word_dict) {
+    if (!(word_i in obstacles)) {
+      unsused_words.push(word_dict[word_i]);
+    }
+  }
+
   if (push_are_obst) {
     obstacles = add_to_dict(pushables, obstacles);
+    obstacles = add_to_dict(unsused_words, obstacles);
   }
   else {
     push_dict = add_to_dict(pushables, push_dict);
+    push_dict = add_to_dict(unsused_words, obstacles);
 
     // add avoid_these to obstacle  
     for (let avoid_this of avoid_these) {
@@ -334,13 +357,13 @@ function a_star(start_pos, end_pos, state, push_are_obst, avoid_these, pushing) 
       obstacles[avoid_str] = push_dict[avoid_str];
     }
   }
-  const words = accessGameState(state, 'words');
+
 
   // key items into the dictionary by their location string. Order added is not important
   obstacles = add_to_dict(killers, obstacles);
   obstacles = add_to_dict(sinkers, obstacles);
   obstacles = add_to_dict(stoppables, obstacles);
-  obstacles = add_to_dict(words, obstacles);
+
 
   // const [x_bounds, y_bounds] = bounds(state)
 

@@ -1,7 +1,7 @@
 const { path } = require("express/lib/application");
 const { isEqual } = require("lodash");
 const { accessGameState, Position, simulate, static, bounds, atLocation, objectFilter } = require("./helpers");
-const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo } = require("./predicates");
+const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo, isWin } = require("./predicates");
 const simjs = require("../../js/simulation");
 
 /* A class to pass around rules where the rule takes the form NOUN IS PROPERTY or NOUN IS NOUN */
@@ -191,7 +191,7 @@ function canActivateRules(state, rules) {
       // TODO: get all permutations of these orders (NOUN,CONN,PROP), (NOUN,PROP, CONN), (PROP,NOUN,CONN), ...
 
       // Get the noun in place
-      if (!atLocation(rule.noun, loc[0])) {
+      if (!atLocation(nextState, rule.noun, loc[0])) {
         nextPath = canPushTo(nextState, rule.noun, loc[0], []);
 
         // continue if there is no path to do this action
@@ -203,7 +203,7 @@ function canActivateRules(state, rules) {
       }
 
       // Get the connector in place
-      if (!atLocation(rule.connector, loc[1])) {
+      if (!atLocation(nextState, rule.connector, loc[1])) {
         nextPath = canPushTo(nextState, rule.connector, loc[1], []);
 
         // continue if there is no path to do this action
@@ -215,8 +215,8 @@ function canActivateRules(state, rules) {
       }
 
       // Get the property in place
-      if (!atLocation(rule.property, loc[2])) {
-        nextPath = canPushTo(state, rule.property, loc[2], []);
+      if (!atLocation(nextState, rule.property, loc[2])) {
+        nextPath = canPushTo(nextState, rule.property, loc[2], []);
 
         // continue if there is no path to do this action
         if (nextPath.length == 0) {
@@ -347,7 +347,7 @@ function generateRuleCandidateLocations(state, rule) {
   if (static(state, rule.connector)) {
     // if the noun is static, just give the remaining possibilities
     if (candidates.length > 0) {
-      return candidates.filter((c) => { return atLocation(rule.connector, c[1]) });
+      return candidates.filter((c) => { return atLocation(state, rule.connector, c[1]) });
     }
 
     // horizontal
@@ -366,7 +366,7 @@ function generateRuleCandidateLocations(state, rule) {
   if (static(state, rule.property)) {
     // if one of the other words is static and this isn't in either possible place, return empty
     if (candidates.length > 0) {
-      return candidates.filter((c) => { return atLocation(rule.property, c[2]) });
+      return candidates.filter((c) => { return atLocation(state, rule.property, c[2]) });
     }
 
     // horizontal
@@ -404,7 +404,7 @@ function generateRuleCandidateLocations(state, rule) {
 
         // check if this neighbor is a word in this rule
         return !Object.values(rule).some((word) => {
-          return atLocation(word, neighbor)
+          return atLocation(state, word, neighbor)
         });
       });
 

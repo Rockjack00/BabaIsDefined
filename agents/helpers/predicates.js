@@ -590,14 +590,33 @@ function canPushInDirection(state, target, direction) {
 
         // if not, recursively check if any object in the way can be pushed in the target direction
         if (reachablePath.length == 0) {
+            // filter if the neighbor is in front of direction, or inbetween the pushing side and the direction
             let pushableNeighbors = neighbors(state, target).filter((n) => {
-                return n.direction == direction;
+                let inverse;
+                switch (direction) {
+                    case "right":
+                        inverse = "left";
+                        break;
+                    case "left":
+                        inverse = "right";
+                        break;
+                    case "up":
+                        inverse = "down";
+                        break;
+                    case "down":
+                        inverse = "up";
+                        break;
+                }
+
+                return n.direction == inverse;
             })
 
             if (pushableNeighbors.length > 0) {
                 reachablePath = canPushInDirection(state, pushableNeighbors[0].neighbor, direction);
             }
         }
+
+
 
         // check that the prediction was actually possible in the simulator
         if (reachablePath.length > 0) {
@@ -631,6 +650,8 @@ function canPushInDirection(state, target, direction) {
  */
 function canPushTo(state, target, end_location) {
 
+    // let running_path;
+
     // first, do canPush to get initial pushable directions. 
     let pos_dirs_dict_temp = canPush(state, target, []);
     let pos_dirs_dict = {};
@@ -643,53 +664,50 @@ function canPushTo(state, target, end_location) {
 
     let target_loc = new Position(target.x, target.y);
 
-    // ignore side-effects, for each YOU, try the following
-    let yous = isYou(state, []);
-    for (let you of yous) {
-        let you_pos = new Position(you.x, you.y);
+    // // ignore side-effects, for each YOU, try the following
+    // let yous = isYou(state, []);
 
-        // for each direction, try a path. Always include the first move here, then the path follows. 
-        for (let push_dir of pos_dirs) {
-            // first path to the start. Always opposite of move direction
-            let path_to_side = pos_dirs_dict[push_dir];
+    // for each direction, try a path. Always include the first move here, then the path follows. 
+    for (let push_dir of pos_dirs) {
+        // first path to the start. Always opposite of move direction
+        let path_to_side = pos_dirs_dict[push_dir];
 
-            // start_loc = null;
-            // switch (push_dir) {
-            //     case "left":
-            //         start_loc = target_loc.get_right();
-            //         break;
-            //     case "right":
-            //         start_loc = target_loc.get_left();
-            //         break;
-            //     case "up":
-            //         start_loc = target_loc.get_dn();
-            //         break;
-            //     case "down":
-            //         start_loc = target_loc.get_up();
-            //         break;
-            // }
-            // path_to_side = a_star_avoid_push(state, you_pos, start_loc);
+        // start_loc = null;
+        // switch (push_dir) {
+        //     case "left":
+        //         start_loc = target_loc.get_right();
+        //         break;
+        //     case "right":
+        //         start_loc = target_loc.get_left();
+        //         break;
+        //     case "up":
+        //         start_loc = target_loc.get_dn();
+        //         break;
+        //     case "down":
+        //         start_loc = target_loc.get_up();
+        //         break;
+        // }
+        // path_to_side = a_star_avoid_push(state, you_pos, start_loc);
 
-            // // if that fails, continue loop
-            // if (path_to_side.length == 0) {
-            //     continue;
-            // }
+        // // if that fails, continue loop
+        // if (path_to_side.length == 0) {
+        //     continue;
+        // }
 
-            let new_state = simulate(state, path_to_side);
+        let new_state = simulate(state, path_to_side);
 
-            // path to the end. 
-            let path_pushing;
-            [path_pushing, _] = a_star_pushing(new_state, target_loc, end_location);
-            // if it fails, try the next push direction available
-            if (path_pushing.length == 0) {
-                continue;
-            }
-            // if that succeeds, then you have a path. combine path_to_side, the first move, and path_pushing
-            let running_path = path_to_side.concat(path_pushing);
-            // return this path
-            return running_path;
+        // path to the end. 
+        let [path_pushing, _] = a_star_pushing(new_state, target_loc, end_location);
+        // if it fails, try the next push direction available
+        if ((path_pushing.length == 0) || (path_pushing[0] != push_dir)) {
+            continue;
         }
+        // if that succeeds, then you have a path. combine path_to_side, the first move, and path_pushing
+        // running_path = ;
+        // return this path
+        return path_to_side.concat(path_pushing);
     }
+
     // exit for loop and return [] since no path found
     return [];
 
