@@ -1,43 +1,65 @@
 const simjs = require("../../js/simulation");
-const { isEqual } = require("lodash")
+const { isEqual } = require("lodash");
 
-
-// MAKE SURE NOT TO HAVE CIRCULAR DEPENDENCIES
-
+/** A helpful class to describe the position of something. */
 class Position {
-  //assuming 0,0 starts in top left, and vertical is y, horizontal is x
+  // Assuming 0,0 starts in top left, and vertical is y, horizontal is x.
 
-  // todo - relocate this to a Typescript file?
-
+  /**
+   * Create a Position.
+   * @param {Integer} x an x location.
+   * @param {Integer} y a y location.
+   */
   constructor(x, y) {
     this.x = x;
     this.y = y;
   }
 
+  /**
+   * Get a new Position above this one.
+   * @returns {Position} a new Position above of this one.
+   */
   get_up() {
     var new_x = this.x;
     var new_y = this.y - 1;
     return new Position(new_x, new_y);
   }
 
+  /**
+   * Get a new Position below this one.
+   * @returns {Position} a new Position below this one.
+   */
   get_dn() {
     var new_x = this.x;
     var new_y = this.y + 1;
     return new Position(new_x, new_y);
   }
 
+  /**
+   * Get a new Position to the left this one.
+   * @returns {Position} a new Position to the left this one.
+   */
   get_left() {
     var new_x = this.x - 1;
     var new_y = this.y;
     return new Position(new_x, new_y);
   }
 
+  /**
+   * Get a new Position to the right this one.
+   * @returns {Position} a new Position to the right this one.
+   */
   get_right() {
     var new_x = this.x + 1;
     var new_y = this.y;
     return new Position(new_x, new_y);
   }
 
+  /**
+   * Get a new Position in the direction relative this one.
+   * @param {String} dir_str a direction.
+   * @returns {Position} a new Position in the direction relative this one.
+   */
   get_dir(dir_str) {
     switch (dir_str) {
       case "right":
@@ -58,78 +80,56 @@ class Position {
     return null;
   }
 
+  /**
+   * Get the string representation of this Position.
+   * @returns {String} a string representation of this Position.
+   */
   get_string() {
     return "" + this.x + ", " + this.y;
   }
 }
 
-// Returns a list of phys_obj based on the corresponding element
+/**
+ * Returns a list of objects based on the corresponding element
+ * @param {State} state the current game state.
+ * @param {String} element the element of the game state to retrieve.
+ * @returns {Array<Object>} a list of objects from the state.
+ */
 function accessGameState(state, element) {
-  game_elements = state[element];
-  return game_elements;
+  return state[element];
 }
 
-// Add the given phys_objs to a dictionary with their position as the key
-function add_to_dict(phys_objs, dictionary) {
-  for (const obj of phys_objs) {
-    let temp_pt = new Position(obj.x, obj.y);
-    dictionary[temp_pt.get_string()] = obj;
+/**
+ * Add the given objects to a dictionary with the string representation of their position as the key
+ * @param {Array<Object>} objs a list of objects to add to a dictionary.
+ * @param {Object} dictionary the dictionary to add objects to
+ * @returns {Object} the modified dictionary.
+ */
+function add_to_dict(objs, dictionary) {
+  for (let obj of objs) {
+    dictionary[new Position(obj.x, obj.y).get_string()] = obj;
   }
 
   return dictionary;
 }
 
-// TODO: use the Lodash.copy and Lodash.deepcopy methods
-// Both DEEPCOPY code blocks from default_AGENT.js, by Milk 
-// COPIES ANYTHING NOT AN OBJECT
-// DEEP COPY CODE FROM HTTPS://MEDIUM.COM/@ZIYOSHAMS/DEEP-COPYING-JAVASCRIPT-ARRAYS-4D5FC45A6E3E
-// function deepCopy(arr) {
-//   let copy = [];
-//   arr.forEach(elem => {
-//     if (Array.isArray(elem)) {
-//       copy.push(deepCopy(elem))
-//     } else {
-//       if (typeof elem === 'object') {
-//         copy.push(deepCopyObject(elem))
-//       } else {
-//         copy.push(elem)
-//       }
-//     }
-//   })
-//   return copy;
-// }
-
-// DEEP COPY AN OBJECT
-// function deepCopyObject(obj) {
-//   let tempObj = {};
-//   for (let [key, value] of Object.entries(obj)) {
-//     if (Array.isArray(value)) {
-//       tempObj[key] = deepCopy(value);
-//     } else {
-//       if (typeof value === 'object') {
-//         tempObj[key] = deepCopyObject(value);
-//       } else {
-//         tempObj[key] = value
-//       }
-//     }
-//   }
-//   return tempObj;
-// }
-
 /**
- * @description Makes a duplicate of the state. To avoid pass by reference issues
+ * Make a duplicate of the state to avoid pass by reference issues.
+ * @param {State} state a game state.
+ * @returns {State} a deep copy of the game state.
  */
 function copy_state(state) {
   return simjs.newState(simjs.parseMap(simjs.showState(state)));
 }
 
 /**
- * @description returns the location to be pushed from as Position object
+ * Return the location to be pushed from as a new Position.
  * @param {Position} position Position object of pushable.
  * @param {string} direction direction pushable will be pushed.
+ * @returns {Position} a new Position object at the location that an object needs to be pushed from.
  */
 function pushing_side(position, direction) {
-  side_of_push = null;
+  let side_of_push;
   switch (direction) {
     case "right":
       side_of_push = position.get_left();
@@ -148,11 +148,14 @@ function pushing_side(position, direction) {
 }
 
 /**
- * @description: Example: [a,b,c] => [[a],[b],[c],[a,b],[a,c],[b,c]]
+ * Get all combinations of items in a list, up to the length of the starting list.
+ *    Example: [a,b,c] => [[a],[b],[c],[a,b],[a,c],[b,c],[a,b,c]]
+ * @param {Array<Object>} start_list a list of items to combine.
+ * @returns {Array<Array<Object>>} a list of all of the combinations of items in the list up the the length of start_list.
  */
 function permutations_of_list(start_list) {
   // remove duplicates
-  start_list = start_list.filter((pos, index) => {
+  let start_list = start_list.filter((pos, index) => {
     const str_pos = pos.get_string();
     return index === start_list.findIndex(obj => {
       return obj.get_string() === str_pos;
@@ -160,12 +163,12 @@ function permutations_of_list(start_list) {
   });
 
   // get all combinations
-  outer_list = []
-  bin_num = 2 ** start_list.length;
+  let outer_list = []
+  const bin_num = 2 ** start_list.length;
   for (let mask = 1; mask < bin_num; mask++) {
-    inner_list = [];
+    let inner_list = [];
     for (let j = 0; j < start_list.length; j++) {
-      index_bin = 2 ** j;
+      let index_bin = 2 ** j;
       if ((index_bin & mask) != 0) { // example: Mask is 0110; 0100 index,  is true. ; 1000 index is false
         inner_list.push(start_list[j]);
       }
@@ -175,53 +178,13 @@ function permutations_of_list(start_list) {
     }
   }
   return outer_list;
-
-
-  // if (start_list.length < 2) {
-  //   return [start_list];
-  // }
-  // if (start_list.length == 2) {
-  //   list_a = [[start_list[0]]];
-  //   list_a.push([start_list[1]]);
-  //   list_a.push([start_list[0], start_list[1]]);
-  //   return list_a;
-  // }
-
-  // let perms = [];
-  // let index = 0;
-  // let temp_list = [];
-  // for (item of start_list) {
-  //   perms.push([item]);
-  // }
-  // // perms.concat(temp_list);
-  // index++;
-
-  // while (index < start_list.length) {
-  //   prev_list = [];
-  //   for (item of start_list) {
-  //     prev_list.push([item]);
-  //   }
-
-  //   temp_list = []
-  //   for (let i = 0; i < prev_list.length - 1; i++) {
-  //     for (let j = i + 1; j < start_list.length; j++) {
-  //       temp_list.push(prev_list[i].concat(start_list[j]));
-  //     }
-  //   }
-  //   perms = perms.concat(temp_list);
-  //   index++;
-  // }
-
-  // perms.push(start_list);
-
-  // return perms;
 }
 
 /**
- * @description Tests if an object is static (can't change position regardless of rules)
- * @param {State} state the current game state
- * @param {object} target any object or Position on the map
- * @returns {boolean} true|false if an object is static
+ * Tests if an object is static (can't change position regardless of rules).
+ * @param {State} state the current game state.
+ * @param {Object} target any object or Position on the map.
+ * @returns {Boolean} true|false if an object is static.
  */
 function static(state, target) {
   const [x_bounds, y_bounds] = bounds(state);
@@ -279,12 +242,11 @@ function static(state, target) {
   return _static_recur(state, target, []);
 }
 
-
 /**
- * @description get objects that are neighbors of the target
- * @param {State} state the current game state
- * @param {Object} target an object or Position
- * @returns {Array} A list of objects of the form {direction: <dir>, neighbor: <n>} containing all of the neighbors of target.
+ * get objects that are neighbors of the target.
+ * @param {State} state the current game state.
+ * @param {Object} target an object or Position.
+ * @returns {Array<Object>} A list of objects of the form {direction: <dir>, neighbor: <n>} containing all of the neighbors of target.
  */
 function neighbors(state, target) {
   // make dictionary of all phys_objs and words in state. 
@@ -307,14 +269,12 @@ function neighbors(state, target) {
 }
 
 /**
- * @description Simulate the path based on the current path and return the simulated state
- * @param {State} state the starting state
- * @param {Array} path the list of steps to step the simulation through
- * @returns the new state after the path is taken
+ * Simulate the path based on the current path and return the simulated state.
+ * @param {State} state the starting state.
+ * @param {Array} path the list of steps to step the simulation through.
+ * @returns the new state after the path is taken.
  */
 function simulate(state, path) {
-  // TODO: change this to simjs.newState() - its probably a lot faster
-  //    maybe give the option to actually simulate (in case there could be side effects?)
   state = copy_state(state);
 
   return path.reduce(function (
@@ -327,10 +287,10 @@ function simulate(state, path) {
 }
 
 /**
- * @description Simulate the path based on the current path and return the end location
- * @param {State} start_loc the starting location
- * @param {Array} path the list of steps to step the simulation through
- * @returns {Position}
+ * Get end location of a path.
+ * @param {Position} start_loc the starting location
+ * @param {Array<String>} path the list of steps to step the simulation through
+ * @returns {Position} a new position at the end of the path.
  */
 function simulate_pos(start_loc, path) {
   last_loc = new Position(start_loc.x, start_loc.y);
@@ -341,9 +301,9 @@ function simulate_pos(start_loc, path) {
 }
 
 /**
- * @description check if an object is at the specified location
- * @param {object} object 
- * @param {Position} position 
+ * check if an object is at the specified location.
+ * @param {Object} object the object.
+ * @param {Position} position the location to see if it lives there.
  * @returns {Boolean} true|false if the object is at the specified position
  */
 function atLocation(object, position) {
@@ -351,25 +311,37 @@ function atLocation(object, position) {
 }
 
 /**
- * @param {State} state 
- * @returns {Array} of integer bounds of the state
+ * Get the maximum bounds of the state.
+ * @param {State} state a game state.
+ * @returns {Array<Integer>} a 2-tuple of the last index of each dimension in the state.
  */
 function bounds(state) {
   return [state["obj_map"][0].length - 1, state["obj_map"].length - 1];
 }
 
-// from https://stackoverflow.com/questions/5072136/javascript-filter-for-objects
+/**
+ * Filter and object's entries based on its keys and values.
+ *   from https://stackoverflow.com/questions/5072136/javascript-filter-for-objects
+ * @param {Object} obj The object to filter.
+ * @param {(String,Object) => Boolean} predicate a test function that takes in the key and value and returns a boolean if the value should be included.
+ * @returns the filtered object.
+ */
 function objectFilter(obj, predicate) {
   return Object.fromEntries(Object.entries(obj).filter(predicate));
 }
 
+// TODO: check that movers are moving in the same directions
+/**
+ * Determine if two states are equivalent.
+ * @param {State} prev_state a game state.
+ * @param {State} cur_state an other game state.
+ * @returns {Boolean} true|false if the two states have all objects in the same locations.
+ */
 function state_equality(prev_state, cur_state) {
   prev = simjs.showState(prev_state)
   cur = simjs.showState(cur_state);
   return prev == cur;
 }
-
-
 
 module.exports = {
   accessGameState,

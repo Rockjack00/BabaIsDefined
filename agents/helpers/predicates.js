@@ -11,11 +11,11 @@ const simjs = require("../../js/simulation");
  */
 
 /**
- * @description Filter all of the objects that are YOU in the current game state.
- *              If yous is empty, all of the objects that are YOU in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} yous possible values of you to filter OR an empty array.
- * @return {array} all objects in yous that are YOU - or all of them - in the current game state.
+ * Filter all of the objects that are YOU in the current game state.
+ * If yous is empty, all of the objects that are YOU in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} yous possible values of you to filter OR an empty array.
+ * @return {Array<Object>} all objects in yous that are YOU - or all of them - in the current game state.
  */
 function isYou(state, yous) {
     const players = accessGameState(state, "players");
@@ -29,11 +29,11 @@ function isYou(state, yous) {
 }
 
 /**
- * @description Filter all of the objects that are WIN in the current game state.
- *              If wins is empty, all of the objects that are WIN in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} wins possible winnable objects OR an empty array.
- * @return {array} all objects in wins that are WIN - or all of them - in the current game state.
+ * Filter all of the objects that are WIN in the current game state.
+ * If wins is empty, all of the objects that are WIN in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} wins possible winnable objects OR an empty array.
+ * @return {Array<Object>} all objects in wins that are WIN - or all of them - in the current game state.
  */
 function isWin(state, wins) {
     const winnables = accessGameState(state, "winnables");
@@ -46,8 +46,14 @@ function isWin(state, wins) {
     return wins;
 }
 
+// TODO: If path is not empty, see if the target gets moved to the end of the path
 /**
- * start object. Target object
+ * Check if an object can get to a location.
+ * @param {State} state the current game state.
+ * @param {Object} start the object to test if it can reach the target.
+ * @param {Object} target an object to try to get to.
+ * @param {Array<String>} path a path to test if start gets to the target.
+ * @returns {Array<String>} a path to the target if it exists, or the empty list if it doesn't.
  */
 function isReachable(state, start, target, path) {
     if (path.length > 0) {
@@ -127,31 +133,12 @@ function isReachable(state, start, target, path) {
     }
 }
 
-/*
-function isReachableAvoidPush(state, start, target, path) {
-    if (path.length > 0) {
-        // step through the path. Check if gets to the target
-        let win = false;
-        let nextState = state;
-        for (let step of path) {
-            [nextState, win] = simjs.nextMove(step, nextState);
-            if (win) {
-                return path;
-            }
-        }
-        return [];
-    } else {
-        return a_star_avoid_push(state, start, target);
-    }
-}
-*/
-
 /**
- * @description Filter all of the objects that are MOVE in the current game state.
- *              If movers is empty, all of the objects that are MOVE in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} movers possible values of move to filter OR an empty array.
- * @return {array} all objects in movers that are MOVE - or all of them - in the current game state.
+ * Filter all of the objects that are MOVE in the current game state.
+ * If movers is empty, all of the objects that are MOVE in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} movers possible values of move to filter OR an empty array.
+ * @return {Array<Object>} all objects in movers that are MOVE - or all of them - in the current game state.
  */
 function isMove(state, movers) {
     const auto_movers = accessGameState(state, "auto_movers");
@@ -165,11 +152,11 @@ function isMove(state, movers) {
 }
 
 /**
- * @description Filter all of the objects that are PUSH in the current game state.
- *              If pushes is empty, all of the objects that are PUSH in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} pushes possible values of push to filter OR an empty array.
- * @return {array} all objects in pushes that are PUSH - or all of them - in the current game state.
+ * Filter all of the objects that are PUSH in the current game state.
+ * If pushes is empty, all of the objects that are PUSH in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} pushes possible values of push to filter OR an empty array.
+ * @return {Array<Object>} all objects in pushes that are PUSH - or all of them - in the current game state.
  */
 function isPush(state, pushes) {
     let pushables = accessGameState(state, "pushables");
@@ -184,11 +171,11 @@ function isPush(state, pushes) {
 }
 
 /**
- * @description Filter all of the objects that are STOP in the current game state.
- *              If stops is empty, all of the objects that are STOP in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} stops possible values of stop to filter OR an empty array.
- * @return {array} all objects in stops that are STOP - or all of them - in the current game state.
+ * Filter all of the objects that are STOP in the current game state.
+ * If stops is empty, all of the objects that are STOP in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} stops possible values of stop to filter OR an empty array.
+ * @return {Array<Object>} all objects in stops that are STOP - or all of them - in the current game state.
  */
 function isStop(state, stops) {
     const stoppables = accessGameState(state, "stoppables");
@@ -202,11 +189,11 @@ function isStop(state, stops) {
 }
 
 /**
- * @description Filter all of the objects that are KILL in the current game state.
- *              If kills is empty, all of the objects that are KILL in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} kills possible values of kill to filter OR an empty array.
- * @return {array} all objects in kills that are KILL - or all of them - in the current game state.
+ * Filter all of the objects that are KILL in the current game state.
+ * If kills is empty, all of the objects that are KILL in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} kills possible values of kill to filter OR an empty array.
+ * @return {Array<Object>} all objects in kills that are KILL - or all of them - in the current game state.
  */
 function isKill(state, kills) {
     const killers = accessGameState(state, "killers");
@@ -220,11 +207,11 @@ function isKill(state, kills) {
 }
 
 /**
- * @description Filter all of the objects that are SINK in the current game state.
- *              If sinks is empty, all of the objects that are SINK in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} sinks possible values of sink to filter OR an empty array.
- * @return {array} all objects in sinks that are SINK - or all of them - in the current game state.
+ * Filter all of the objects that are SINK in the current game state.
+ * If sinks is empty, all of the objects that are SINK in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} sinks possible values of sink to filter OR an empty array.
+ * @return {Array<Object>} all objects in sinks that are SINK - or all of them - in the current game state.
  */
 function isSink(state, sinks) {
     const sinkers = accessGameState(state, "sinkers");
@@ -238,11 +225,11 @@ function isSink(state, sinks) {
 }
 
 /**
- * @description Filter all of the objects that are HOT in the current game state.
- *              If hot_objs is empty, all of the objects that are HOT in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} hot_objs possible values of hot to filter OR an empty array.
- * @return {array} all objects in hot_objs that are HOT - or all of them - in the current game state.
+ * Filter all of the objects that are HOT in the current game state.
+ * If hot_objs is empty, all of the objects that are HOT in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} hot_objs possible values of hot to filter OR an empty array.
+ * @return {Array<Object>} all objects in hot_objs that are HOT - or all of them - in the current game state.
  */
 function isHot(state, hot_objs) {
     const featured = accessGameState(state, "featured");
@@ -261,11 +248,11 @@ function isHot(state, hot_objs) {
 }
 
 /**
- * @description Filter all of the objects that are MELT in the current game state.
- *              If melts is empty, all of the objects that are MELT in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} melts possible values of melt to filter OR an empty array.
- * @return {array} all objects in melts that are MELT - or all of them - in the current game state.
+ * Filter all of the objects that are MELT in the current game state.
+ * If melts is empty, all of the objects that are MELT in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} melts possible values of melt to filter OR an empty array.
+ * @return {Array<Object>} all objects in melts that are MELT - or all of them - in the current game state.
  */
 function isMelt(state, melts) {
     const featured = accessGameState(state, "featured");
@@ -283,15 +270,15 @@ function isMelt(state, melts) {
     return melts;
 }
 
+// TODO: move this function into strategy.js?
 /**
- * @description Get a new path to move pushables out of the way of the A* path
- *              If this cannot be done, return an empty list
- * @param {Object} state the current game state.
- * @param {array} path_locs List of locations as path to the goal, ignoring pushables. 
- * @param {phys_obj} start_obj The start object, likely whatever is YOU.
- * @param {array} avoid_these Avoid these pushable locations, because a previous time they caused a loss.
- * @return {[array,array]} a new path that pushes the obstacles out of the way.
- *                          and a list of the moved obstacles.
+ * Get a new path to move pushables out of the way of the A* path
+ * If this cannot be done, return an empty list
+ * @param {State} state the current game state.
+ * @param {Array<Position>} path_locs List of Positions as path to the goal, ignoring pushables. 
+ * @param {Object} start_obj The start object, likely whatever is YOU.
+ * @param {Array<Position>} avoid_these Avoid these pushable Positions, because a previous time they caused a loss.
+ * @return {[Array<String>, Array<Position>]} a new path that pushes the obstacles out of the way and a list of the moved obstacles.
  */
 function canClearPath(state, path_locs, start_obj, avoid_these) {
     let moved_pushables = [];
@@ -432,7 +419,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                 //set end location
                 last_loc = cur_loc;
 
-                
+
                 // add the steps of pushing to path to side of push
                 let full_path;
                 if (path_to_side[0] != "space") {
@@ -543,14 +530,15 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     return [running_path, moved_pushables, last_loc];
 }
 
+// TODO: move this function into strategy.js?
 /**
- * @description Filter all of the objects in the current game state and can actually be pushed.
- *              If pushes is empty, all of the objects that are PUSH in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} pushes possible values of push to filter OR an empty array.
- * @return {array} all objects in pushes that can be pushed - or all of them - in the current game state.
- *                 returns a list of objects of the form: 
- *                      {obj: <object>, directions: [{direction:<dir>, path: <p>}, ...]}.
+ * Filter all of the objects in the current game state and can actually be pushed.
+ * If pushes is empty, all of the objects that are PUSH in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} pushes possible values of push to filter OR an empty array.
+ * @return {Array<Object>} all objects in pushes that can be pushed - or all of them - in the current game state.
+ *                         returns a list of objects of the form: 
+ *                              {obj: <object>, directions: [{direction:<dir>, path: <p>}, ...]}.
  */
 function canPushThese(state, pushes) {
     let outList = [];
@@ -566,14 +554,15 @@ function canPushThese(state, pushes) {
     return outList;
 }
 
+// TODO: move this function into strategy.js?
 /**
- * @description Filter all of the directions that an object can actually be pushed.
- *              If directions is empty, all directions will be checked.
+ * Filter all of the directions that an object can actually be pushed.
+ * If directions is empty, all directions will be checked.
  * @param {State} state the current game state.
  * @param {Object} target the object to push.
- * @param {array} directions possible diretions to filter OR an empty array.
- * @return {array} directions that the target can be pushed in of those given - or all possible.
- *                 items in this list are key/value pairs of the form {direction: <dir>, path: <path-to-take>}
+ * @param {Array<String>} directions possible diretions to filter OR an empty array.
+ * @return {Array<Object>} directions that the target can be pushed in of those given - or all possible.
+ *                         items in this list are key/value pairs of the form {direction: <dir>, path: <path-to-take>}
  */
 function canPush(state, target, directions) {
     let state_copy = copy_state(state);
@@ -595,14 +584,12 @@ function canPush(state, target, directions) {
     return outList;
 }
 
-// TODO: add the last pushing action to the path
-
 /**
- * @description Get the path to push a target in a direction
+ * Get the path to push a target in a direction
  * @param {State} state the current game state.
  * @param {Object} target the object to push.
  * @param {String} direction the direction to push in
- * @return {array} Path to get to a target to push it if found, else the empty list
+ * @return {Array<String>} Path to get to a target to push it if found, else the empty list
  */
 function canPushInDirection(state, target, direction) {
     const yous = isYou(state, []);
@@ -676,16 +663,15 @@ function canPushInDirection(state, target, direction) {
     return [];
 }
 
+// TODO: add the last pushing action to the path
 /**
- * @description evaluate the path required to push a target to a location. 
- *              If path is not empty, just see if it works.
- * @param {*} state the current game state
- * @param {*} target the object to be pushed
- * @param {*} end_location the location the object needs to end up in
- * @param {*} path a path to get there.
- * @returns A path that succeeds, or the empty list if none are found.
+ * Evaluate the path required to push a target to a location. 
+ * @param {State} state the current game state
+ * @param {Object} target the object to be pushed
+ * @param {Position} end_location the Position the object needs to end up in
+ * @returns {Array<String>} A path that succeeds, or the empty list if none are found.
  */
-function canPushTo(state, target, end_location, path) {
+function canPushTo(state, target, end_location) {
 
     // first, do canPush to get initial pushable directions. 
     let pos_dirs_dict_temp = canPush(state, target, []);
@@ -786,11 +772,11 @@ function canPushTo(state, target, end_location, path) {
 }
 
 /**
- * @description Filter all of the objects that are NOUN in the current game state.
- *              If nouns is empty, all of the objects that are NOUN in the current state.
- * @param {State} state the acsii representation of the current game state.
- * @param {array} nouns possible values of NOUN to filter OR an empty array.
- * @return {array} all objects in nouns that are NOUN - or all of them - in the current game state.
+ * Filter all of the objects that are NOUN in the current game state.
+ * If nouns is empty, all of the objects that are NOUN in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} nouns possible values of NOUN to filter OR an empty array.
+ * @return {Array<Object>} all objects in nouns that are NOUN - or all of them - in the current game state.
  */
 function isNoun(state, nouns) {
     const word_objs = accessGameState(state, "words");
@@ -806,11 +792,11 @@ function isNoun(state, nouns) {
 }
 
 /**
- * @description Filter all of the objects that are CONNECTOR in the current game state.
- *              If connectors is empty, all of the objects that are CONNECTOR in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} connectors possible values of CONNECTOR to filter OR an empty array.
- * @return {array} all objects in connectors that are CONNECTOR - or all of them - in the current game state.
+ * Filter all of the objects that are CONNECTOR in the current game state.
+ * If connectors is empty, all of the objects that are CONNECTOR in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} connectors possible values of CONNECTOR to filter OR an empty array.
+ * @return {Array<Object>} all objects in connectors that are CONNECTOR - or all of them - in the current game state.
  */
 function isConnector(state, connectors) {
     const word_objs = accessGameState(state, "words");
@@ -826,11 +812,11 @@ function isConnector(state, connectors) {
 }
 
 /**
- * @description Filter all of the objects that are PROPERTY in the current game state.
- *              If properties is empty, all of the objects that are PROPERTY in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} properties possible values of PROPERTY to filter OR an empty array.
- * @return {array} all objects in properties that are PROPERTY - or all of them - in the current game state.
+ * Filter all of the objects that are PROPERTY in the current game state.
+ *  If properties is empty, all of the objects that are PROPERTY in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Object>} properties possible values of PROPERTY to filter OR an empty array.
+ * @return {Array<Object>} all objects in properties that are PROPERTY - or all of them - in the current game state.
  */
 function isProperty(state, properties) {
     const word_objs = accessGameState(state, "words");

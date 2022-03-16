@@ -10,7 +10,7 @@ const EAGER = false;
 var MAX_SEQ = 50;
 
 /**
- * @description Find a winning path in the current game state.
+ * Find a winning path in the current game state.
  * @param {State} state the current game state.
  * @return {Array<String>} a winning path.
  */
@@ -127,7 +127,7 @@ function solve_level(state) {
 }
 
 /**
- * @description Find a path for the agent to tatke in a given a game state.
+ * Find a path for the agent to tatke in a given a game state.
  * @param {State} state the current game state.
  * @param {Array<PhysObj>} yous an array of objects that are YOU to use to find a path.
  * @param {Array<PhysObj>} wins an array of objects that are WIN to try to path to.
@@ -157,7 +157,7 @@ function getPaths(state, yous, wins) {
 }
 
 /**
- * @description Find all possible WIN rules that the agent is able to activate.
+ * Find all possible WIN rules that the agent is able to activate.
  *              If passed a non-empty list of nouns, it will only find WIN rules using those nouns
  * @param {State} state the current game state.
  * @param {Array<Word>} nouns a set of noun words in the game state OR an empty array.
@@ -179,7 +179,7 @@ function assertWin(state, nouns) {
 }
 
 /**
-* @description Find all possible rules that change one object into another object type that is already WIN that the agent is able to activate.
+* Find all possible rules that change one object into another object type that is already WIN that the agent is able to activate.
 *              If passed a non-empty list of subject_nouns, it will only find rules using those nouns AS THE SUBJECT (the thing being transformed)
 * @param {State} state the current game state.
 * @param {Array<Word>} subject_nouns a set of subject noun words in the game state OR an empty array.
@@ -213,7 +213,7 @@ function createWin(state, subject_nouns) {
 }
 
 /**
- * @description Finds all winning paths that can be found by changing any of the changeable rules in the game.
+ * Finds all winning paths that can be found by changing any of the changeable rules in the game.
  * @param {State} state the current game state.
  * @return {Array<Object>} A set of winning paths along with which YOU got to which WIN.
  *                         Each object is of the form {you: <you>, win: <win>, path: <path>}
@@ -230,7 +230,7 @@ function changeableRulesSolve(state) {
 }
 
 /**
- * @description Finds all winning paths that can be found by changing any of the given rules.
+ * Finds all winning paths that can be found by changing any of the given rules.
  * @param {State} state the current game state.
  * @param {Array<Rule>} rules a set of rules to attempt to change.
  * @return {Array<Object>} A set of winning paths along with which YOU got to which WIN.
@@ -269,7 +269,7 @@ function singleRuleChangeSolve(state, rules) {
 }
 
 /**
- * @description Employs a default (random) solver if no path can be found by the intelligent solver.
+ * Employs a default (random) solver if no path can be found by the intelligent solver.
  *              The goal is either to find a winning path, or to find a new state that can be handed to the intelligent solver.
  * @param {State} state the current game state.
  * @returns {Array<String>} a winning path OR calls solve_level again with the updated state.

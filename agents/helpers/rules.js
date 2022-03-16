@@ -4,14 +4,13 @@ const { accessGameState, Position, simulate, static, bounds, atLocation, objectF
 const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo } = require("./predicates");
 const simjs = require("../../js/simulation");
 
-/**
- * A class to pass around rules where the rule takes the form NOUN IS PROPERTY
- */
+/* A class to pass around rules where the rule takes the form NOUN IS PROPERTY or NOUN IS NOUN */
 class Rule {
   /**
-   * @param {object} noun
-   * @param {object} connector
-   * @param {object} property
+   * Create a Rule.
+   * @param {object} noun the subject of the rule, which applies to all matching phys_obj 
+   * @param {object} connector an IS connector
+   * @param {object} property a property to apply to all matching phys_obj - OR - a noun to transform all of the Rule.nouns into.
    */
   constructor(noun, connector, property) {
     this.noun = noun;
@@ -19,19 +18,22 @@ class Rule {
     this.property = property;
   }
 
+  /**
+   * See if this Rule is equal to something else.
+   * @param {Any} other 
+   * @returns {Boolean} true|false if all of the values for all of the fields of this Rule match other (even if they aren't the same Object)
+   */
   equals(other) {
     return isEqual(this, other);
   }
 }
 
 /**
- * @description Generate property and noun rules based on the current state and given words and rules lists. 
- *              Return the concatenation of property rules and noun rules.
+ * Generate all possible rules of combinations properties and nouns based on the current state and given words and rules lists. 
  * @param {State} state the current game state.
- * @param {array} words possible words to filter OR an empty array.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, property: p} or format {noun: n, connector: c, noun: n}.
- *
+ * @param {Array<Word>} words possible words to filter OR an empty array.
+ * @param {Array<Rule>} rules possible rules to filter OR an empty array.
+ * @return {Array<Rule>} list of filtered rules - or all possible.
  */
 function generateRules(state, words, rules) {
   let property_rules = generatePropertyRules(state, words, rules);
@@ -40,13 +42,12 @@ function generateRules(state, words, rules) {
 }
 
 /**
- * @description Filter by words and/or rules from all of the property rules that can be generated from the current game state.
- *              If words and rules are empty, all possible property rules are returned (cartesian product).
+ * Filter by words and/or rules from all of the property rules that can be generated from the current game state.
+ * If words and rules are empty, all possible property rules are returned (cartesian product).
  * @param {State} state the current game state.
- * @param {array} words possible words to filter OR an empty array.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, property: p}.
- *
+ * @param {Array<Word>} words possible words to filter OR an empty array.
+ * @param {Array<Rule>} rules possible rules to filter OR an empty array.
+ * @return {Array<Rule>} filtered rules - or all possible.
  */
 function generatePropertyRules(state, words, rules) {
   if (words.length == 0 && rules.length == 0) { // Generate all possible property rules
@@ -61,13 +62,12 @@ function generatePropertyRules(state, words, rules) {
 }
 
 /**
- * @description Filter by words and/or rules from all of the noun rules that can be generated from the current game state.
- *              If words and rules are empty, all possible noun rules are returned (cartesian product).
+ * Filter by words and/or rules from all of the noun rules that can be generated from the current game state.
+ * If words and rules are empty, all possible noun rules are returned (cartesian product).
  * @param {State} state the current game state.
- * @param {array} words possible words to filter OR an empty array.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filtered rules - or all possible in triple of format {noun: n, connector: c, noun: n}.
- *
+ * @param {Array<Word>} words possible words to filter OR an empty array.
+ * @param {Array<Rule>} rules possible rules to filter OR an empty array.
+ * @return {Array<Rule>} filtered rules - or all possible.
  */
 function generateNounRules(state, words, rules) {
   if (words.length == 0 && rules.length == 0) { // Generate all possible noun rules
@@ -82,12 +82,11 @@ function generateNounRules(state, words, rules) {
 }
 
 /**
- * @description Gets all rules given nouns, connectors, and properties.
- * @param {array} nouns possible noun words.
- * @param {array} connectors possible connector words.
- * @param {array} properties possible property words.
- * @return {array} all possible rules in triple of format {noun: n, connector: c, property: p}.
- *
+ * Gets all rules given nouns, connectors, and properties.
+ * @param {Array<Word>} nouns possible noun words.
+ * @param {Array<Word>} connectors possible connector words.
+ * @param {Array<Word>} properties possible property words.
+ * @return {Array<Rule>} all possible rules from the given combination of words.
  */
 function getRules(nouns, connectors, properties) {
   let rules = [];
@@ -109,11 +108,11 @@ function getRules(nouns, connectors, properties) {
 }
 
 /**
- * @description Filter out rules that are active in the current game state.
- *              If rules is empty, all of the rules in effect in the current state.
- * @param {string} state the acsii representation of the current game state.
- * @param {array} rules possible values of rule to filter OR an empty array.
- * @return {array} filter out all rules that are active in the current game state.
+ * Filter out rules that are active in the current game state.
+ * If rules is empty, all of the rules in effect in the current state.
+ * @param {State} state the current game state.
+ * @param {Array<Rule>} rules possible values of rule to filter OR an empty array.
+ * @return {Array<Rule>} filter out all rules that are active in the current game state.
  */
 function activeRules(state, rules) {
   const stateRules = accessGameState(state, "rule_objs");
@@ -136,11 +135,12 @@ function activeRules(state, rules) {
 }
 
 /**
- * @description Filter out rules in the current game state that can be changed.
- *              If rules is empty, all of the possible rules in this level.
- * @param {state} state the current game state.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} for every rules that can be changed an object of the form {rule: <rule>, path: <path-to-change>}
+ * Filter out rules in the current game state that can be changed.
+ * If rules is empty, all of the possible rules in this level.
+ * @param {State} state the current game state.
+ * @param {Array<Rule>} rules possible rules to filter OR an empty array.
+ * @return {Array<Object>} for every rule that can be changed an object of the form 
+ *                         {rule: <rule>, path: <path-to-change>}
  */
 function canChangeRules(state, rules) {
   // first get all the rules that can be activated
@@ -151,12 +151,12 @@ function canChangeRules(state, rules) {
 }
 
 /**
- * @description Filter out rules that can be activated from the current game state.
- *              If rules is empty, filter from all of the possible rules in this level.
- * @param {state} state the current game state.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} filter out all rules that can be activated from the current game state.
- *                 Objects in this list are of the form {rule: <Rule>, path: <path>} 
+ * Filter out rules that can be activated from the current game state.
+ * If rules is empty, filter from all of the possible rules in this level.
+ * @param {State} state the current game state.
+ * @param {Array<Rule>} rules possible rules to filter OR an empty array.
+ * @return {Array<Object>} filter out all rules that can be activated from the current game state.
+ *                         Objects in this list are of the form {rule: <Rule>, path: <path>} 
  */
 function canActivateRules(state, rules) {
 
@@ -234,11 +234,12 @@ function canActivateRules(state, rules) {
 }
 
 /**
- * @description Filter out rules in the current game state that can be deactivated.
- *              If rules is empty, filter from all of the active rules.
- * @param {state} state the current game state.
- * @param {array} rules possible rules to filter OR an empty array.
- * @return {array} for every rules that can be deactivated, an object of the form {rule: <rule>, path: <path-to-change>}
+ * Filter out rules in the current game state that can be deactivated.
+ * If rules is empty, filter from all of the active rules.
+ * @param {State} state the current game state.
+ * @param {Array<Rule>} rules possible rules to filter OR an empty array.
+ * @return {Array<Object>} for every rules that can be deactivated, an object of the form 
+ *                         {rule: <rule>, path: <path-to-change>}
  */
 function canDeactivateRules(state, rules) {
   let outList = [];
@@ -261,10 +262,10 @@ function canDeactivateRules(state, rules) {
 }
 
 /**
- * @description If a rule can be deactivated, return a path to do so
- * @param {state} state the current game state.
+ * If a rule can be deactivated, return a path to do so
+ * @param {State} state the current game state.
  * @param {Rule} rule the rule to attempt to deactivate
- * @return {array} the first path found that deactivates this rule or an empty path if none are found.
+ * @return {Array<String>} the first path found that deactivates this rule or an empty path if none are found.
  */
 function canDeactivateRule(state, rule) {
 
@@ -301,7 +302,7 @@ function canDeactivateRule(state, rule) {
 }
 
 /**
- * @description Get the direction of an existing rule.
+ * Get the direction of an existing rule.
  * @param {Rule} rule an active rule
  * @returns {string} "down"|"right" if the rule reads top-to-bottom|left-to-right
  */
@@ -310,10 +311,10 @@ function ruleDirection(rule) {
 }
 
 /**
- * @description Generate all of the locations that a new rule could be created, including from other 
+ * Generate all of the locations that a new rule could be created, including from other 
  * @param {State} state the current game state
  * @param {Rule} rule A rule (that is nonexistant) to search candidate locations for
- * @returns {Array} An array of 3-tuples of positions where a rule can be created
+ * @returns {Array<Array<Position>>} An array of 3-tuples of positions where a rule can be created
  */
 function generateRuleCandidateLocations(state, rule) {
   const [x_bounds, y_bounds] = bounds(state);
