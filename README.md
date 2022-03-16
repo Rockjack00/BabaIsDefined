@@ -1,6 +1,6 @@
 # BabaIsDefined
 
-A class project for CSC 481 - Knowledge Based Systems at Cal Poly taught by Dr. Rodrigo Canaan. 
+### A class project for CSC 481 - Knowledge Based Systems at Cal Poly taught by Dr. Rodrigo Canaan. 
 
 We create an agent that intelligently solves
 levels for the game 'Baba Is You' based on the [KekeCompetition](https://github.com/MasterMilkX/KekeCompetition) framework
