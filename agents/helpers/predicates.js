@@ -264,7 +264,6 @@ function isMelt(state, melts) {
  */
 function canClearPath(state, path_locs, start_obj, avoid_these) {
     let moved_pushables = [];
-    let temp;
     const pushables = accessGameState(state, "pushables");
     // TODO - check if pushables includes words?? Will this be an issue?
     let obst_dict = {};
@@ -313,13 +312,14 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
     // checks if it can push, but cannot path out of the way
     let danger_push = [];
 
+
     // step through the path to find pushables that are in the way
     for (let i = 0; i < path_locs.length; ++i) {
         let cur_str = path_locs[i].get_string();
         if (cur_str in push_dict) {
             path_reachable = [];
             // first, add to moved_pushables
-            temp = new Position(path_locs[i].x, path_locs[i].y);
+            let temp = new Position(path_locs[i].x, path_locs[i].y);
             moved_pushables.push(temp);
 
             // try to push out of the way. {direction: <dir>, path: <path-to-take>}

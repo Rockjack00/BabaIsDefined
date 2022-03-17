@@ -1,7 +1,6 @@
-const { path } = require("express/lib/application");
 const { isEqual } = require("lodash");
-const { accessGameState, Position, simulate, static, bounds, atLocation, objectFilter, objectAtLocation } = require("./helpers");
-const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo, isWin } = require("./predicates");
+const { accessGameState, Position, simulate, static, neighbors, bounds, atLocation, objectFilter } = require("./helpers");
+const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo } = require("./predicates");
 const simjs = require("../../js/simulation");
 
 /* A class to pass around rules where the rule takes the form NOUN IS PROPERTY or NOUN IS NOUN */
@@ -216,7 +215,7 @@ function canActivateRules(state, rules) {
 
       // Get the property in place
       if (!atLocation(nextState, rule.property, loc[2])) {
-        nextPath = canPushTo(nextState, rule.property, loc[2], []);
+        nextPath = canPushTo(state, rule.property, loc[2], []);
 
         // continue if there is no path to do this action
         if (nextPath.length == 0) {
@@ -347,7 +346,7 @@ function generateRuleCandidateLocations(state, rule) {
   if (static(state, rule.connector)) {
     // if the noun is static, just give the remaining possibilities
     if (candidates.length > 0) {
-      return candidates.filter((c) => { return objectAtLocation(rule.connector, c[1]) });
+      return candidates.filter((c) => { return atLocation(state, rule.connector, c[1]) });
     }
 
     // horizontal
@@ -390,14 +389,14 @@ function generateRuleCandidateLocations(state, rule) {
   }
 
   // Find candidates (filter any static options)
-  for (let col in _range(1, x_bounds - 1)) {
-    for (let row in _range(1, y_bounds - 1)) {
+  for (let col of _range(1, x_bounds - 1)) {
+    for (let row of _range(1, y_bounds - 1)) {
       let pos = new Position(col, row);
 
       // get all immovable obstacles that aren't words in this rule
-      let obstacles = objectFilter(neighbors(pos), ([_, neighbor]) => {
+      let obstacles = objectFilter(neighbors(state, pos), ([_, neighbor]) => {
 
-        // static objects, STOP objects, and edges are returned as obstacles
+        // static edges, STOP objects, and edges are returned as obstacles
         if (static(state, neighbor) || isStop(state, [neighbor])) {
           return true;
         }
