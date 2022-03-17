@@ -1,11 +1,11 @@
 {
     "levels": [
         {
-            "id": "231",
-            "name": "Make flag is win",
-            "author": "Kormaican",
-            "ascii": "__________\n_Bwb..13._\n_1w......_\n_2w......_\n_ww..w..._\n_....F..._\n_W......._\n_1.f....._\n_6......._\n__________",
-            "solution": "dddddrurdruurluruldllrullddddd"
+            "id": 9,
+            "name": "Push target then deactivate",
+            "author": "Rockjack00",
+            "ascii": "__________\n_F13.ww.._\n_B12V15.._\n_www..w.._\n_fww..w.._\n_...v.w.._\n_R15w.w.W_\n_wwwwrw.1_\n_b......6_\n__________",
+            "solution": "rrrruuuuluudddlllu"
         },
         {
             "id": 10,
@@ -13,6 +13,13 @@
             "author": "Kormaican",
             "ascii": "__________\n_B.b..13._\n_1......._\n_2......._\n_....w..._\n_....F..._\n_W......._\n_1.f....._\n_6......._\n__________",
             "solution": "ddddrrdruuuruldludlldddd"
+        },
+        {
+            "id": 231,
+            "name": "Make flag is win",
+            "author": "Kormaican",
+            "ascii": "__________\n_Bwb..13._\n_1w......_\n_2w......_\n_ww..w..._\n_....F..._\n_W......._\n_1.f....._\n_6......._\n__________",
+            "solution": "dddddrurdruurluruldllrullddddd"
         },
         {
             "id": 230,
@@ -76,13 +83,6 @@
             "author": "Rockjack00",
             "ascii": "__________\n_........_\n_BwwwwwwF_\n_1w....w1_\n_2wW16.w3_\n_ww....ww_\n_b.....wf_\n_ww....ww_\n_.w....ww_\n__________",
             "solution": "rruuddrrrrr"
-        },
-        {
-            "id": 9,
-            "name": "Push target then deactivate",
-            "author": "Rockjack00",
-            "ascii": "__________\n_F13.ww.._\n_B12V15.._\n_www..w.._\n_fww..w.._\n_...v.w.._\n_R15w.w.W_\n_wwwwrw.1_\n_b......6_\n__________",
-            "solution": "rrrruuuuluudddlllu"
         }
     ]
 }

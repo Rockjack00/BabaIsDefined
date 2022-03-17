@@ -126,7 +126,7 @@ function getPaths(state, yous, wins) {
   let solutions = [];
   for (let y of yous) {
     for (let w of wins) {
-      let p = isReachable(state, y, w, []);
+      let p = isReachable(state, y, w, [], null);
 
       if (p.length > 0) {
         console.log(

@@ -236,7 +236,7 @@ function game_bound_check(state, next_space) {
  * 
  * @param {*} state 
  * @param {*} start_obj 
- * @param {*} end_obj 
+ * @param {*} end_obj Can be object or Position
  * @param {boolean} push_are_obst 
  * @param {Array} avoid_these 
  * @returns {[Array, Array]} [path_moves, path_locations] 

@@ -239,7 +239,10 @@ function static(state, target) {
     return _horizTest(target_neighbors) && _vertTest(target_neighbors);
   }
 
-  return _static_recur(state, target, []);
+  // add YOUs to ignore these
+  let yous = accessGameState(state, "players");
+
+  return _static_recur(state, target, yous);
 }
 
 /**

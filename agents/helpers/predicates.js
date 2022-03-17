@@ -53,9 +53,10 @@ function isWin(state, wins) {
  * @param {Object} start the object to test if it can reach the target.
  * @param {Object} target an object to try to get to.
  * @param {Array<String>} path a path to test if start gets to the target.
+ * @param {phys_obj} actual_target In cases of pushing, the actual target is necessary for canClearPath
  * @returns {Array<String>} a path to the target if it exists, or the empty list if it doesn't.
  */
-function isReachable(state, start, target, path) {
+function isReachable(state, start, target, path, actual_target) {
 
     // path was given to test
     if (path.length > 0) {
@@ -74,7 +75,7 @@ function isReachable(state, start, target, path) {
 
     // try A*, but ignore obstacles. Send this to canClearPath.
     [new_path, path_locations] = a_star_reachable(state, start, target, false, []);
-    let [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, []);
+    let [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, [], actual_target);
 
     // simulate new path
     let new_state = simulate(state, clearing_path);
@@ -94,7 +95,7 @@ function isReachable(state, start, target, path) {
         for (let avoid_these of avoid_perms) {
             // try A* and clear path again, but consider the last pushable an obstacle.
             [new_astar, path_locations] = a_star_reachable(state, start, target, false, avoid_these);
-            [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, avoid_these);
+            [clearing_path, moved_pushables, last_loc] = canClearPath(state, path_locations, start, avoid_these, target);
 
             // simulate new path
             new_state = simulate(new_state, clearing_path);
@@ -260,9 +261,22 @@ function isMelt(state, melts) {
  * @param {Array<Position>} path_locs List of Positions as path to the goal, ignoring pushables. 
  * @param {Object} start_obj The start object, likely whatever is YOU.
  * @param {Array<Position>} avoid_these Avoid these pushable Positions, because a previous time they caused a loss.
+ * @param {Object} target The object you want to clear a path to get to. When this is a pushable, it is very important.
  * @return {[Array<String>, Array<Position>]} a new path that pushes the obstacles out of the way and a list of the moved obstacles.
  */
-function canClearPath(state, path_locs, start_obj, avoid_these) {
+function canClearPath(state, path_locs, start_obj, avoid_these, target) {
+    let target_pos;
+    if (target != null) {
+        target_pos = new Position(target.x, target.y);
+    }
+
+    // check that all locations except the last one DO NOT intersect the target object
+    for (let temp_i; temp_i < path_locs.length - 1; temp_i++) {
+        if (path_locs.get_string() == target_pos.get_string()) {
+            return [[], []];
+        }
+    }
+
     let moved_pushables = [];
     const pushables = accessGameState(state, "pushables");
     // TODO - check if pushables includes words?? Will this be an issue?
@@ -280,6 +294,18 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
         obst_dict[avoid_str] = temp_push_dict[avoid_str];
         delete temp_push_dict[avoid_str];
     }
+
+
+    // if the thing you wish to push is in the way of you pushing it, then you cannot push it. 
+    // // remove target from the push_dict if it is inside
+    // if (target != null) {
+    //     let target_str = target_pos.get_string();
+    //     if (target_str in temp_push_dict) {
+    //         obst_dict[target_str] = temp_push_dict[target_str];
+    //         delete temp_push_dict[target_str];
+    //     }
+    // }
+
     const push_dict = temp_push_dict;
 
     if (push_dict.length == 0) {
@@ -462,7 +488,7 @@ function canClearPath(state, path_locs, start_obj, avoid_these) {
                         [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, false, avoid_these);
                         // recursively retry canClearPath with new state and new path locations
                         let clearing_path, _temp_pushed;
-                        [clearing_path, _temp_pushed, last_loc] = canClearPath(cur_state, new_locs, start_obj_1, []);
+                        [clearing_path, _temp_pushed, last_loc] = canClearPath(cur_state, new_locs, start_obj_1, [], target);
 
                         if (clearing_path.length != 0) {
                             if (path_to_side_2[0] != 'space') {
@@ -585,8 +611,8 @@ function canPushInDirection(state, target, direction) {
     // ignoring side effects, greedily see if any YOU object can push the target
     for (let you of yous) {
 
-        // first check if the pushTarget is reachable
-        let [reachablePath, _] = a_star_avoid_push(state, new Position(you.x, you.y), pushTarget);
+        // first check if the pushTarget can be pushed in direction
+        let reachablePath = isReachable(state, you, pushTarget, [], target);
 
         // if not, recursively check if any object in the way can be pushed in the target direction
         if (reachablePath.length == 0) {
