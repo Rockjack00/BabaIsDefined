@@ -9,10 +9,56 @@ based on the [KekeCompetition](https://github.com/MasterMilkX/KekeCompetition) f
 
 [Competition Website](http://keke-ai-competition.com/)
 
+## KekeCompetition - JS Version
+
+### Introduction
+
+Framework for the Keke Competition - an AI competition for the puzzle game 'Baba is You'.
+This version uses the JS implementation originally found on the [Baba is Y'all](http://equius.gil.engineering.nyu.edu/) website
+
+### Requirements
+
+-   NodeJS
+-   Web-browser (preferably Google Chrome)
+-   Terminal
+-   A text editor (for creating agents)
+-   lodash (A JavaScript library containing thousands of useful functions)
+
+### Installation
+
+1. Clone this repository to your local machine
+2. Download and install the package manager [NodeJS](https://nodejs.org/en/download/)
+3. Run the command `npm install` to install the necessary packages found in the [package-lock.json](package-lock.json) file
+
+### Usage
+
+Note: At this time some levels seem to run infinitely and a small number even crash. If you encounter this, you can remove the level by finding the related level pack under the json_levels folder and removing the level from the json file.
+
+#### Start the server:
+
+1. Run the command `node index-server.js`.
+2. In a browser, go to the URL `localhost:8080`
+   _Note_: this port number can be changed on _line 15_ in the [index-server.js](index-server.js) file
+
+#### Attaching VSCode Debugger
+
+1. To enable Auto Attach feature, from the Command Palette (Ctrl+Shift+P) type `Toggle Auto Attach`. Select the option `Only With Flag`, the flag being `--inspect`.
+2. Now to run the server with the debugger, simply do the same but with the flag: `node --inspect index-server.js`
+
+### Quick Start
+
+1. Our agent in implemented in `js_AGENT.js`. To create a new agent, copy the `empty_AGENT.js` file and rename it with the following convention:
+   `[NAME]_AGENT.py`.
+2. Modify the `step()` and `init()` functions in the agent code.
+3. In the evaluator app on your browser, select your agent from the dropdown on the right
+4. Select the level set you want to test on from the dropdown on the right
+5. Press 'Run Agent' to evaluate the levels from the selected level set
+
+For more information, check the [competition wiki](https://github.com/MasterMilkX/KekeCompetition/wiki)
+
 ## Style Checking
 
-In order to maintain project readability, we will use the following
-style checkers and linters.
+In order to maintain project readability, we  use the following style checkers and linters.
 
 ### Format on Save
 
@@ -47,53 +93,6 @@ The following Prettier options are modified from their default value:
 
 ---
 
-## KekeCompetition - JS Version
-
-### Introduction
-
-Framework for the Keke Competition - an AI competition for the puzzle game 'Baba is You'.
-This version uses the JS implementation originally found on the [Baba is Y'all](http://equius.gil.engineering.nyu.edu/) website
-
-### Requirements
-
--   NodeJS
--   Web-browser (preferably Google Chrome)
--   Terminal
--   A text editor (for creating agents)
--   Tau-prolog (A Prolog interpreter for JavaScript)
-
-### Installation
-
-1. Clone this repository to your local machine
-2. Download and install the package manager [NodeJS](https://nodejs.org/en/download/)
-3. Run the command `npm install` to install the necessary packages found in the [package-lock.json](package-lock.json) file
-
-### Usage
-
-Note: At this time some levels seem to run infinitely and a small number even crash. If you encounter this, you can remove the level by finding the related level pack under the json_levels folder and removing the level from the json file.
-
-#### Start the server:
-
-1. Run the command `node index-server.js`.
-2. In a browser, go to the URL `localhost:8080`
-   _Note_: this port number can be changed on _line 15_ in the [index-server.js](index-server.js) file
-
-#### Attaching VSCode Debugger
-
-1. To enable Auto Attach feature, from the Command Palette (Ctrl+Shift+P) type `Toggle Auto Attach`. Select the option `Only With Flag`, the flag being `--inspect`.
-2. Now to run the server with the debugger, simply do the same but with the flag: `node --inspect index-server.js`
-
-### Quick Start
-
-1. To create a new agent, copy the `empty_AGENT.js` file and rename it with the following convention:
-   `[NAME]_AGENT.py`.
-2. Modify the `step()` and `init()` functions in the agent code.
-3. In the evaluator app on your browser, select your agent from the dropdown on the right
-4. Select the level set you want to test on from the dropdown on the right
-5. Press 'Run Agent' to evaluate the levels from the selected level set
-
-For more information, check the [competition wiki](https://github.com/MasterMilkX/KekeCompetition/wiki)
-
-### License
+## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
