@@ -547,7 +547,7 @@ function canPush(state, target, directions) {
 function canPushInDirection(state, target, direction) {
     const yous = isYou(state, []);
 
-    if (isPush(state, target).length < 1) {
+    if (isPush(state, [target]).length < 1) {
         // target isn't pushable
         return [];
     }
@@ -607,7 +607,19 @@ function canPushInDirection(state, target, direction) {
             })
 
             if (pushableNeighbors.length > 0) {
-                reachablePath = canPushInDirection(state, pushableNeighbors[0].neighbor, direction);
+                let temp_neighbor = pushableNeighbors[0].neighbor;
+
+                if (isPush(state, [temp_neighbor]).length < 1) {
+                    // target isn't pushable
+                    reachablePath = [];
+                }
+
+                else if (static(state, target)) {
+                    // target is inacessable
+                    reachablePath = [];
+                }
+
+                else { reachablePath = canPushInDirection(state, pushableNeighbors[0].neighbor, direction); }
             }
         }
 
