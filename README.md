@@ -70,6 +70,8 @@ This version uses the JS implementation originally found on the [Baba is Y'all](
 
 ### Usage
 
+Note: At this time some levels seem to run infinitely and a small number even crash. If you encounter this, you can remove the level by finding the related level pack under the json_levels folder and removing the level from the json file.
+
 #### Start the server:
 
 1. Run the command `node index-server.js`.
