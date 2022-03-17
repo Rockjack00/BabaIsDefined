@@ -1,4 +1,4 @@
-const { accessGameState, copy_state, Position, add_to_dict, permutations_of_list, static, neighbors, simulate, pushing_side, state_equality, simulate_pos } = require("./helpers");
+const { accessGameState, copy_state, Position, add_to_dict, permutations_of_list, static, neighbors, simulate, pushing_side, state_equality, simulate_pos, objectFilter, arrayDifference } = require("./helpers");
 const { floodfill_reachable, a_star_reachable, game_bound_check, a_star_avoid_push, a_star_pushing } = require("./pathing");
 
 const simjs = require("../../js/simulation");
@@ -265,251 +265,220 @@ function isMelt(state, melts) {
  * @return {[Array<String>, Array<Position>]} a new path that pushes the obstacles out of the way and a list of the moved obstacles.
  */
 function canClearPath(state, path_locs, start_obj, avoid_these, target) {
-    let target_pos;
-    if (target != null) {
-        target_pos = new Position(target.x, target.y);
-    }
+    const start_loc = new Position(start_obj.x, start_obj.y);
 
     // check that all locations except the last one DO NOT intersect the target object
-    for (let temp_i; temp_i < path_locs.length - 1; temp_i++) {
-        if (path_locs.get_string() == target_pos.get_string()) {
-            return [[], []];
-        }
+    if (target && path_locs.some((loc) => { return loc.here(target) })) {
+        return [[], [], start_loc];
     }
 
-    let moved_pushables = [];
-    const pushables = accessGameState(state, "pushables");
-    // TODO - check if pushables includes words?? Will this be an issue?
-    let obst_dict = {};
-    let temp_push_dict = add_to_dict(pushables, {});
+    // create a dictionary of pushables that aren't in avoid these
+    const push_dict = add_to_dict(arrayDifference(accessGameState(state, "pushables"), avoid_these,
+        (pushable, avoid_this) => {
+            return avoid_this.here(pushable);
+        }), {})
 
-    let path_dict = {};
-    for (let path_loc of path_locs) {
-        path_dict[path_loc.get_string()] = path_loc;
+    // if all pushables in the path also need to be avoided, there is no solution.
+    if (Object.keys(push_dict).length == 0) {
+        return [[], [], start_loc];
     }
 
-    //remove avoid_these from push_dict. Add to obst_dict instead
-    for (let avoid_this of avoid_these) {
-        let avoid_str = avoid_this.get_string();
-        obst_dict[avoid_str] = temp_push_dict[avoid_str];
-        delete temp_push_dict[avoid_str];
-    }
+    // create a dictionary of path_locs
+    const path_dict = add_to_dict(path_locs, {});
 
+    // create a dicitonary of obstacles
+    let obst_dict = add_to_dict([].concat(
+        avoid_these,
+        accessGameState(state, "killers"),
+        accessGameState(state, "sinkers"),
+        accessGameState(state, "stoppables"),
+        accessGameState(state, "words")
+    ), {});
 
-    // if the thing you wish to push is in the way of you pushing it, then you cannot push it. 
-    // // remove target from the push_dict if it is inside
-    // if (target != null) {
-    //     let target_str = target_pos.get_string();
-    //     if (target_str in temp_push_dict) {
-    //         obst_dict[target_str] = temp_push_dict[target_str];
-    //         delete temp_push_dict[target_str];
-    //     }
-    // }
-
-    const push_dict = temp_push_dict;
-
-    if (push_dict.length == 0) {
-        return [[], [], []];
-    }
-
-    // death things
-    const killers = accessGameState(state, "killers");
-    const sinkers = accessGameState(state, "sinkers");
-    // stoppables
-    const stoppables = accessGameState(state, "stoppables");
-    // words
-    const words = accessGameState(state, "words");
-
-    // obstacles
-    obst_dict = add_to_dict(killers, obst_dict);
-    obst_dict = add_to_dict(sinkers, obst_dict);
-    obst_dict = add_to_dict(stoppables, obst_dict);
-    obst_dict = add_to_dict(words, obst_dict);
-
-    // make a new_State for use in moving the pushables
+    /* step through the path to find pushables that are in the way */
+    let last_loc = start_loc;
     let new_state = copy_state(state);
 
-    // set the last location as the start_bj location
-    let last_loc = new Position(start_obj.x, start_obj.y);
+    // a list of ALL pushables that get moved while clearing the path (even if they didn't start in the path)
+    let moved_pushables = [];
 
-    //the running path to move all objects out of the way.
+    // the running path to move all objects out of the way.
     let running_path = [];
 
     // checks if it can push, but cannot path out of the way
     let danger_push = [];
 
-
-    // step through the path to find pushables that are in the way
     for (let i = 0; i < path_locs.length; ++i) {
         let cur_str = path_locs[i].get_string();
-        if (cur_str in push_dict) {
-            path_reachable = [];
-            // first, add to moved_pushables
-            let temp = new Position(path_locs[i].x, path_locs[i].y);
-            moved_pushables.push(temp);
+        if (!(cur_str in push_dict) || (target && path_locs[i].here(target))) {
+            continue;
+        }
 
-            // try to push out of the way. {direction: <dir>, path: <path-to-take>}
+        // first, add to moved_pushables
+        let temp = new Position(path_locs[i].x, path_locs[i].y);
+        moved_pushables.push(temp);
 
-            let pos_dirs_dict_temp = canPush(new_state, push_dict[cur_str], []);
-            let pos_dirs_dict = {};
-            let pos_dirs = [];
+        // try to push out of the way. {direction: <dir>, path: <path-to-take>}
+        let pos_dirs_dict_temp = canPush(new_state, push_dict[cur_str], []);
+        let pos_dirs_dict = {};
+        let pos_dirs = [];
 
-            for (let key of pos_dirs_dict_temp.keys()) {
-                pos_dirs_dict[pos_dirs_dict_temp[key]['direction']] = pos_dirs_dict_temp[key]['path'];
-                pos_dirs.push(pos_dirs_dict_temp[key]['direction']);
+        for (let key of pos_dirs_dict_temp.keys()) {
+            pos_dirs_dict[pos_dirs_dict_temp[key]['direction']] = pos_dirs_dict_temp[key]['path'];
+            pos_dirs.push(pos_dirs_dict_temp[key]['direction']);
+        }
+
+        if (pos_dirs.length == 0) {
+            break;
+        }
+
+        let chosen_dir = null;
+        let step_loc = path_locs[i];
+
+        for (let pos_dir of pos_dirs) {
+            //step in path direction
+            let step_str = cur_str;
+            while ((step_str in path_dict) && !(step_str in obst_dict) && game_bound_check(new_state, step_loc)) {
+                step_loc = step_loc.get_dir(pos_dir);
+                step_str = step_loc.get_string();
             }
 
-            if (pos_dirs.length == 0) {
+            // check if stepping ended on a obstacle
+            // game_bound = game_bound_check(new_state, step_loc);
+            if ((step_str in obst_dict) ||
+                (!game_bound_check(new_state, step_loc))) {
+                danger_push.push(pos_dir);
+                continue;
+            }
+            else {
+                danger_push = [];
+                chosen_dir = pos_dir;
                 break;
             }
 
-            let chosen_dir = null;
-            let step_loc = path_locs[i];
+        }
 
-            for (let pos_dir of pos_dirs) {
-                //step in path direction
-                let step_str = cur_str;
-                while ((step_str in path_dict) && !(step_str in obst_dict) && game_bound_check(new_state, step_loc)) {
-                    step_loc = step_loc.get_dir(pos_dir);
-                    step_str = step_loc.get_string();
-                }
+        // check if path could not be cleared. This is when we incrementally push and recheck
+        if (chosen_dir != null) {
 
-                // check if stepping ended on a obstacle
-                // game_bound = game_bound_check(new_state, step_loc);
-                if ((step_str in obst_dict) ||
-                    (!game_bound_check(new_state, step_loc))) {
-                    danger_push.push(pos_dir);
-                    continue;
-                }
-                else {
-                    danger_push = [];
-                    chosen_dir = pos_dir;
-                    break;
-                }
+            // generate path to move pushable out of the way
+            // first, go to the correct side of the pushable
+            // note that the side of the pushable is opposite the direction you want to push it
+            let side_of_push = pushing_side(path_locs[i], chosen_dir);
 
+            //path to side of push. TODO- might be an issue when multiple yous?
+            let path_to_side = pos_dirs_dict[chosen_dir];
+
+            // step in direction until rock not in path. count how many times moved.
+            // side_of_push is start location
+            let counter = 0;
+            let cur_loc = side_of_push;
+            let push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
+
+            // do checks on the pushable, then count as move
+            while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) && game_bound_check(new_state, step_loc)) {
+                counter++;
+                cur_loc = cur_loc.get_dir(chosen_dir);
+                push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
             }
 
-            // check if path could not be cleared. This is when we incrementally push and recheck
-            if (chosen_dir != null) {
+            //set end location
+            last_loc = cur_loc;
 
-                // generate path to move pushable out of the way
+            // add the steps of pushing to path to side of push
+            let full_path;
+            if (path_to_side[0] != "space") {
+                full_path = path_to_side;
+                for (let j = 0; j < counter; j++) {
+                    full_path.push(chosen_dir);
+                }
+            }
+            else {
+                full_path = [];
+            }
+
+            // now full_path is the path to move this object out of the way
+            // add the full_path to the running_path
+            running_path = running_path.concat(full_path);
+
+            // and last_loc is the location YOU end at after pushing the object out of the way
+            // simulate path to get new state. Set to "new_state", for use moving the next pushable
+            new_state = simulate(new_state, full_path);
+        }
+
+        // if it can push, just not out of the path, recursively call isReachable
+        if (danger_push.length != 0) {
+            for (let push_dir_temp of danger_push) {
+                const push_dir = push_dir_temp;
+                let cur_state = copy_state(state);
+                // set the last location as the start_obj location
+                // last_loc = new Position(start_obj.x, start_obj.y);
+
                 // first, go to the correct side of the pushable
                 // note that the side of the pushable is opposite the direction you want to push it
-                let side_of_push = pushing_side(path_locs[i], chosen_dir);
+                let side_of_push = pushing_side(path_locs[i], push_dir);
 
-                //path to side of push. TODO- might be an issue when multiple yous?
-                let path_to_side = pos_dirs_dict[chosen_dir];
 
-                // step in direction until rock not in path. count how many times moved.
-                // side_of_push is start location
-                let counter = 0;
-                let cur_loc = side_of_push;
-                let push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
-
-                // do checks on the pushable, then count as move
-                while ((push_loc_str in path_dict) && !(push_loc_str in obst_dict) && game_bound_check(new_state, step_loc)) {
-                    counter++;
-                    cur_loc = cur_loc.get_dir(chosen_dir);
-                    push_loc_str = cur_loc.get_dir(chosen_dir).get_string();
-                }
-
-                //set end location
-                last_loc = cur_loc;
-
-                // add the steps of pushing to path to side of push
-                let full_path;
-                if (path_to_side[0] != "space") {
-                    full_path = path_to_side;
-                    for (let j = 0; j < counter; j++) {
-                        full_path.push(chosen_dir);
-                    }
-                }
-                else {
-                    full_path = [];
-                }
-
-                // now full_path is the path to move this object out of the way
-                // add the full_path to the running_path
-                running_path = running_path.concat(full_path);
+                //path to side of push
+                const path_to_side_2 = pos_dirs_dict[push_dir];
 
                 // and last_loc is the location YOU end at after pushing the object out of the way
-                // simulate path to get new state. Set to "new_state", for use moving the next pushable
-                new_state = simulate(new_state, full_path);
-            }
+                // simulate path to get new state. Set to "cur_state", for use moving the next pushable
+                cur_state = simulate(cur_state, path_to_side_2);
 
-            // if it can push, just not out of the path, recursively call isReachable
-            if (danger_push.length != 0) {
-                for (let push_dir_temp of danger_push) {
-                    const push_dir = push_dir_temp;
-                    let cur_state = copy_state(state);
-                    // set the last location as the start_obj location
-                    // last_loc = new Position(start_obj.x, start_obj.y);
-
-                    // first, go to the correct side of the pushable
-                    // note that the side of the pushable is opposite the direction you want to push it
-                    let side_of_push = pushing_side(path_locs[i], push_dir);
+                // move in direction one space. get the new state. 
+                //Check that the new state is different from the prev_state. If not, exit before recursive call
+                cur_state = simulate(cur_state, [push_dir]);
+                if (!state_equality(state, cur_state)) {
+                    last_loc = simulate_pos(last_loc, path_to_side_2);
+                    last_loc = last_loc.get_dir(push_dir);
+                    let target_loc = path_locs[path_locs.length - 1];
+                    let obj_dict = add_to_dict(cur_state.phys, {});
+                    obj_dict = add_to_dict(cur_state.words, obj_dict);
 
 
-                    //path to side of push
-                    const path_to_side_2 = pos_dirs_dict[push_dir];
+                    let start_obj_1 = obj_dict[last_loc.get_string()];
+                    let target_obj_1 = obj_dict[target_loc.get_string()];
 
-                    // and last_loc is the location YOU end at after pushing the object out of the way
-                    // simulate path to get new state. Set to "cur_state", for use moving the next pushable
-                    cur_state = simulate(cur_state, path_to_side_2);
-
-                    // move in direction one space. get the new state. 
-                    //Check that the new state is different from the prev_state. If not, exit before recursive call
-                    cur_state = simulate(cur_state, [push_dir]);
-                    if (!state_equality(state, cur_state)) {
-                        last_loc = simulate_pos(last_loc, path_to_side_2);
-                        last_loc = last_loc.get_dir(push_dir);
-                        let target_loc = path_locs[path_locs.length - 1];
-                        let obj_dict = add_to_dict(cur_state.phys, {});
-                        obj_dict = add_to_dict(cur_state.words, obj_dict);
-
-
-                        let start_obj_1 = obj_dict[last_loc.get_string()];
-                        let target_obj_1 = obj_dict[target_loc.get_string()];
-
-                        // try A* as pushables are obstacles
-                        let temp_path, new_locs;
-                        [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, true, []);
-                        if (temp_path.length != 0) {
-                            if (path_to_side_2[0] != 'space') {
-                                running_path = path_to_side_2.concat([push_dir]);
-                            }
-                            else {
-                                running_path = [push_dir];
-                            }
-                            break;
+                    // try A* as pushables are obstacles
+                    let temp_path, new_locs;
+                    [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, true, []);
+                    if (temp_path.length != 0) {
+                        if (path_to_side_2[0] != 'space') {
+                            running_path = path_to_side_2.concat([push_dir]);
                         }
-
-                        // try A* ignoring pushables,except avoid_these
-                        [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, false, avoid_these);
-                        // recursively retry canClearPath with new state and new path locations
-                        let clearing_path, _temp_pushed;
-                        [clearing_path, _temp_pushed, last_loc] = canClearPath(cur_state, new_locs, start_obj_1, [], target);
-
-                        if (clearing_path.length != 0) {
-                            if (path_to_side_2[0] != 'space') {
-                                running_path = path_to_side_2.concat([push_dir], clearing_path);
-                            }
-                            else {
-                                running_path = [push_dir].concat(clearing_path);
-                            }
-                            break;
+                        else {
+                            running_path = [push_dir];
                         }
+                        break;
+                    }
+
+                    // try A* ignoring pushables,except avoid_these
+                    [temp_path, new_locs] = a_star_reachable(cur_state, start_obj_1, target_obj_1, false, avoid_these);
+                    // recursively retry canClearPath with new state and new path locations
+                    let clearing_path, _temp_pushed;
+                    [clearing_path, _temp_pushed, last_loc] = canClearPath(cur_state, new_locs, start_obj_1, [], target);
+
+                    if (clearing_path.length != 0) {
+                        if (path_to_side_2[0] != 'space') {
+                            running_path = path_to_side_2.concat([push_dir], clearing_path);
+                        }
+                        else {
+                            running_path = [push_dir].concat(clearing_path);
+                        }
+                        break;
                     }
                 }
-                if (running_path.length != 0) {
-                    break;
-                }
+            }
+            if (running_path.length != 0) {
+                break;
             }
         }
+
     }
 
     if (running_path.length == 0) {
-        last_loc = new Position(start_obj.x, start_obj.y);
+        last_loc = start_loc;
     }
     return [running_path, moved_pushables, last_loc];
 }

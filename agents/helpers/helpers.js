@@ -87,6 +87,15 @@ class Position {
   get_string() {
     return "" + this.x + ", " + this.y;
   }
+
+  /**
+   * See if another object has the same coordinates as this Position.
+   * @param {Object} other another object with positional coordinates.
+   * @returns {Boolean} true|false if the other object has the same positional coordinates.
+   */
+  here(other) {
+    return other && other.x && other.y && this.x == other.x && this.y == other.y
+  }
 }
 
 /**
@@ -202,11 +211,10 @@ function static(state, target) {
   function _static_recur(state, target, ignore_these) {
 
     // get all neighbors that haven't already been checked
-    let target_neighbors = neighbors(state, target).filter((n) => {
-      return !ignore_these.some((ignored) => {
-        return isEqual(n.neighbor, ignored)
+    let target_neighbors = arrayDifference(neighbors(state, target), ignore_these,
+      (n, ignored) => {
+        return isEqual(n.neighbor, ignored);
       })
-    });
 
     ignore_these.push(target);
 
@@ -345,11 +353,26 @@ function bounds(state) {
  * Filter and object's entries based on its keys and values.
  *   from https://stackoverflow.com/questions/5072136/javascript-filter-for-objects
  * @param {Object} obj The object to filter.
- * @param {(String,Object) => Boolean} predicate a test function that takes in the key and value and returns a boolean if the value should be included.
+ * @param {([Key,Value]) => Boolean} predicate a test function that takes in the key and value and returns a boolean if the value should be included.
  * @returns the filtered object.
  */
 function objectFilter(obj, predicate) {
   return Object.fromEntries(Object.entries(obj).filter(predicate));
+}
+
+/**
+ * Fiter objects from one array if they are equivalent to objects in a second array.
+ * @param {Array<Object>} arr1 the array to filter .
+ * @param {Array<Object>} arr2 the array of objects to subtract.
+ * @param {(Object, Object) => Boolean} predicate a function to determine if the items are equivalent.
+ * @returns 
+ */
+function arrayDifference(arr1, arr2, predicate) {
+  return arr1.filter((item1) => {
+    return !arr2.some((item2) => {
+      return predicate(item1, item2);
+    })
+  })
 }
 
 // TODO: check that movers are moving in the same directions
@@ -377,6 +400,7 @@ module.exports = {
   bounds,
   atLocation,
   objectFilter,
+  arrayDifference,
   pushing_side,
   state_equality,
   simulate_pos,

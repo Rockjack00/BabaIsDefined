@@ -1,5 +1,5 @@
 const { isEqual } = require("lodash");
-const { accessGameState, Position, simulate, static, neighbors, bounds, atLocation, objectFilter } = require("./helpers");
+const { accessGameState, Position, simulate, static, neighbors, bounds, atLocation, objectFilter, arrayDifference } = require("./helpers");
 const { isNoun, isConnector, isProperty, isStop, canPush, canPushTo } = require("./predicates");
 const simjs = require("../../js/simulation");
 
@@ -165,12 +165,7 @@ function canActivateRules(state, rules) {
   }
 
   // remove any rules that are already in effect
-  let existingRules = activeRules(state, rules);
-  rules = rules.filter((rule) => {
-    return !existingRules.some((exRule) => {
-      return exRule.equals(rule);
-    });
-  });
+  rules = arrayDifference(rules, activeRules(state, rules), (rule, exRule) => { return exRule.equals(rule) })
 
   // find all the rules that can be created in those locations
   let outList = [];
